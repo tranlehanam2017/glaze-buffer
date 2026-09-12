@@ -51,6 +51,10 @@ export class RingBuffer {
     return output;
   }
 
+  public drain(): Uint8Array {
+    return this.read(this.count);
+  }
+
   public peek(length: number): Uint8Array {
     const bytesToPeek = Math.min(length, this.count);
     if (bytesToPeek === 0) return new Uint8Array(0);

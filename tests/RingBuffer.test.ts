@@ -37,6 +37,17 @@ function testRingBuffer() {
   assert(rb.isFull() === true, "Should be full");
   assert(rb.availableWrite === 0, "Available write should be 0 when full");
   
+  // Test drain
+  rb.clear();
+  rb.write([100, 200, 300]);
+  const drained = rb.drain();
+  assert(drained.length === 3 && drained[0] === 100 && drained[2] === 300, "Drain failed");
+  assert(rb.isEmpty(), "Buffer should be empty after drain");
+
+  // Test writing more than capacity
+  rb.write([1, 2, 3, 4, 5, 6, 7]);
+  assert(rb.availableRead === 5, "Should only have written up to capacity");
+  
   console.log("All tests passed!");
 }
 
