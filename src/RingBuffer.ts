@@ -51,12 +51,37 @@ export class RingBuffer {
     return output;
   }
 
+  public peek(length: number): Uint8Array {
+    const bytesToPeek = Math.min(length, this.count);
+    if (bytesToPeek === 0) return new Uint8Array(0);
+
+    const output = new Uint8Array(bytesToPeek);
+    const firstChunkSize = Math.min(bytesToPeek, this.size - this.readOffset);
+    
+    output.set(this.buffer.subarray(this.readOffset, this.readOffset + firstChunkSize));
+
+    if (bytesToPeek > firstChunkSize) {
+      const secondChunkSize = bytesToPeek - firstChunkSize;
+      output.set(this.buffer.subarray(0, secondChunkSize), firstChunkSize);
+    }
+
+    return output;
+  }
+
   public get availableRead(): number {
     return this.count;
   }
 
   public get availableWrite(): number {
     return this.size - this.count;
+  }
+
+  public isEmpty(): boolean {
+    return this.count === 0;
+  }
+
+  public isFull(): boolean {
+    return this.count === this.size;
   }
 
   public clear(): void {

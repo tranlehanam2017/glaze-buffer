@@ -18,21 +18,24 @@ function testRingBuffer() {
   assert(rb.availableRead === 1, "Available read should be 1");
 
   // Test wrap around
-  rb.write([4, 5, 6]); // buffer is [_, _, 3, 4, 5], writeOffset is 2, count is 4 (3 was already there)
-  // Wait, rb had [0,0,0,0,0] -> write [1,2,3] -> [1,2,3,0,0] (W=3, R=0, C=3)
-  // read 2 -> [1,2,3,0,0] (W=3, R=2, C=1)
-  // write [4,5,6] -> [4,5,3,4,5] ? No, let's re-trace.
-  // Initial: rb(5), buf[0,0,0,0,0], R=0, W=0, C=0
-  // write [1,2,3]: buf[1,2,3,0,0], R=0, W=3, C=3
-  // read 2: returns [1,2], buf[1,2,3,0,0], R=2, W=3, C=1
-  // write [4,5,6]: 
-  // i=0: buf[3]=4, W=4, C=2
-  // i=1: buf[4]=5, W=0, C=3
-  // i=2: buf[0]=6, W=1, C=4
-  // State: buf[6,2,3,4,5], R=2, W=1, C=4
-  
+  rb.write([4, 5, 6]);
   const remaining = rb.read(4);
   assert(remaining[0] === 3 && remaining[1] === 4 && remaining[2] === 5 && remaining[3] === 6, "Wrap around read failed");
+  
+  // Test peek
+  rb.write([10, 20]);
+  const peeked = rb.peek(2);
+  assert(peeked.length === 2 && peeked[0] === 10 && peeked[1] === 20, "Peek data mismatch");
+  assert(rb.availableRead === 2, "Peek should not consume data");
+
+  // Test isEmpty/isFull
+  assert(rb.isEmpty() === false, "Should not be empty");
+  rb.read(2);
+  assert(rb.isEmpty() === true, "Should be empty after reading all");
+  
+  rb.write([1, 2, 3, 4, 5]);
+  assert(rb.isFull() === true, "Should be full");
+  assert(rb.availableWrite === 0, "Available write should be 0 when full");
   
   console.log("All tests passed!");
 }
