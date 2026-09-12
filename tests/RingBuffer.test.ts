@@ -52,6 +52,15 @@ function testRingBuffer() {
   // Test writing more than capacity
   rb.write([1, 2, 3, 4, 5, 6, 7]);
   assert(rb.availableRead === 5, "Should only have written up to capacity");
+
+  // Test readExactly
+  rb.clear();
+  rb.write([10, 20, 30]);
+  const exact1 = rb.readExactly(5);
+  assert(exact1 === null, "readExactly should return null if insufficient data");
+  const exact2 = rb.readExactly(2);
+  assert(exact2 !== null && exact2.length === 2 && exact2[0] === 10 && exact2[1] === 20, "readExactly read failed");
+  assert(rb.availableRead === 1, "Available read should be 1 after readExactly");
   
   console.log("All tests passed!");
 }

@@ -51,6 +51,11 @@ export class RingBuffer {
     return output;
   }
 
+  public readExactly(length: number): Uint8Array | null {
+    if (this.count < length) return null;
+    return this.read(length);
+  }
+
   public drain(): Uint8Array {
     return this.read(this.count);
   }
