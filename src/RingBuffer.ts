@@ -12,27 +12,42 @@ export class RingBuffer {
 
   public write(data: Uint8Array | number[]): number {
     const input = data instanceof Uint8Array ? data : new Uint8Array(data);
-    let bytesWritten = 0;
+    const space = this.availableWrite;
+    const bytesToWrite = Math.min(input.length, space);
 
-    for (let i = 0; i < input.length; i++) {
-      if (this.count === this.size) break;
-      
-      this.buffer[this.writeOffset] = input[i];
-      this.writeOffset = (this.writeOffset + 1) % this.size;
-      this.count++;
-      bytesWritten++;
+    if (bytesToWrite === 0) return 0;
+
+    const firstChunkSize = Math.min(bytesToWrite, this.size - this.writeOffset);
+    this.buffer.set(input.subarray(0, firstChunkSize), this.writeOffset);
+
+    if (bytesToWrite > firstChunkSize) {
+      const secondChunkSize = bytesToWrite - firstChunkSize;
+      this.buffer.set(input.subarray(firstChunkSize, bytesToWrite), 0);
     }
 
-    return bytesWritten;
+    this.writeOffset = (this.writeOffset + bytesToWrite) % this.size;
+    this.count += bytesToWrite;
+
+    return bytesToWrite;
   }
 
   public read(length: number): Uint8Array {
-    const output = new Uint8Array(Math.min(length, this.count));
-    for (let i = 0; i < output.length; i++) {
-      output[i] = this.buffer[this.readOffset];
-      this.readOffset = (this.readOffset + 1) % this.size;
-      this.count--;
+    const bytesToRead = Math.min(length, this.count);
+    if (bytesToRead === 0) return new Uint8Array(0);
+
+    const output = new Uint8Array(bytesToRead);
+    const firstChunkSize = Math.min(bytesToRead, this.size - this.readOffset);
+    
+    output.set(this.buffer.subarray(this.readOffset, this.readOffset + firstChunkSize));
+
+    if (bytesToRead > firstChunkSize) {
+      const secondChunkSize = bytesToRead - firstChunkSize;
+      output.set(this.buffer.subarray(0, secondChunkSize), firstChunkSize);
     }
+
+    this.readOffset = (this.readOffset + bytesToRead) % this.size;
+    this.count -= bytesToRead;
+
     return output;
   }
 
