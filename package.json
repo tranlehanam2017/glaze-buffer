@@ -1,0 +1,15 @@
+{
+  "name": "glaze-buffer",
+  "version": "0.1.0",
+  "description": "High-performance ring buffer for TypeScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "ts-node tests/RingBuffer.test.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  }
+}
