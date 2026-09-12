@@ -28,6 +28,11 @@ function testRingBuffer() {
   assert(peeked.length === 2 && peeked[0] === 10 && peeked[1] === 20, "Peek data mismatch");
   assert(rb.availableRead === 2, "Peek should not consume data");
 
+  // Test peekAll
+  const peekedAll = rb.peekAll();
+  assert(peekedAll.length === 2 && peekedAll[0] === 10 && peekedAll[1] === 20, "peekAll data mismatch");
+  assert(rb.availableRead === 2, "peekAll should not consume data");
+
   // Test isEmpty/isFull
   assert(rb.isEmpty() === false, "Should not be empty");
   rb.read(2);

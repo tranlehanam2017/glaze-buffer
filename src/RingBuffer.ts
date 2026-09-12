@@ -72,6 +72,10 @@ export class RingBuffer {
     return output;
   }
 
+  public peekAll(): Uint8Array {
+    return this.peek(this.count);
+  }
+
   public get availableRead(): number {
     return this.count;
   }
