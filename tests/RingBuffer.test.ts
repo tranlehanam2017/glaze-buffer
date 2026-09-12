@@ -61,6 +61,17 @@ function testRingBuffer() {
   const exact2 = rb.readExactly(2);
   assert(exact2 !== null && exact2.length === 2 && exact2[0] === 10 && exact2[1] === 20, "readExactly read failed");
   assert(rb.availableRead === 1, "Available read should be 1 after readExactly");
+
+  // Test resize
+  rb.clear();
+  rb.write([1, 2, 3]);
+  rb.resize(10);
+  assert(rb.availableRead === 3, "Data should be preserved after resize");
+  assert(rb.availableWrite === 7, "New capacity should be reflected in availableWrite");
+  rb.write([4, 5, 6, 7, 8, 9, 10]);
+  assert(rb.availableRead === 10, "Should be able to write more data after resizing");
+  const resizedData = rb.drain();
+  assert(resizedData.length === 10 && resizedData[0] === 1 && resizedData[9] === 10, "Resized data integrity check failed");
   
   console.log("All tests passed!");
 }

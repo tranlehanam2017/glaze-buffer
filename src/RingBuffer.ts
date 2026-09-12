@@ -81,6 +81,23 @@ export class RingBuffer {
     return this.peek(this.count);
   }
 
+  public resize(newCapacity: number): void {
+    if (newCapacity === this.size) return;
+
+    const newBuffer = new Uint8Array(newCapacity);
+    const data = this.peekAll();
+    
+    // Clear and reset offsets to normalize the buffer in the new array
+    this.buffer = newBuffer;
+    this.size = newCapacity;
+    this.readOffset = 0;
+    this.writeOffset = 0;
+    this.count = 0;
+
+    // Write back the existing data
+    this.write(data);
+  }
+
   public get availableRead(): number {
     return this.count;
   }
