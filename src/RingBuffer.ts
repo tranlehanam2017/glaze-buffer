@@ -61,6 +61,24 @@ export class RingBuffer {
     return byte;
   }
 
+  public readUint8(): number | null {
+    return this.readByte();
+  }
+
+  public readUint16(): number | null {
+    if (this.count < 2) return null;
+    const bytes = this.read(2);
+    // Big-endian read
+    return (bytes[0] << 8) | bytes[1];
+  }
+
+  public readUint32(): number | null {
+    if (this.count < 4) return null;
+    const bytes = this.read(4);
+    // Big-endian read
+    return ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0;
+  }
+
   public readExactly(length: number): Uint8Array | null {
     if (this.count < length) return null;
     return this.read(length);
@@ -116,21 +134,6 @@ export class RingBuffer {
   public seek(offset: number): boolean {
     if (offset === 0) return true;
 
-    const newRelativePos = (this.count - this.count) + (this.count === 0 ? 0 : 0); // conceptual
-    // Relative to the current readOffset, we can move within the range [-readOffset_relative_to_start, count - current_relative_pos]
-    // Actually, easier: calculate the absolute position within the virtual sequence of 'count' bytes.
-    
-    // The current readOffset is at virtual index 0. The end is at virtual index this.count - 1.
-    // We can only seek within the current buffer window [0, this.count].
-    // Since we only allow seeking within the *available* data (to avoid reading garbage), 
-    // we treat the current readOffset as index 0 and the end of available data as index this.count.
-    // However, usually seek is relative to the current pointer.
-    
-    // But wait, if we move backward, we are moving into data already read (which might be overwritten).
-    // To be safe, this RingBuffer only allows seeking within the current valid 'count' range.
-    // In a simple ring buffer, moving backward is only safe if the data hasn't been overwritten.
-    // For this implementation, we will only allow seeking forward within the available data.
-    
     if (offset < 0) return false; // Backward seek not supported to prevent reading overwritten data
     if (offset > this.count) return false;
 
