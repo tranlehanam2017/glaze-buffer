@@ -79,7 +79,16 @@ function testRingBuffer() {
   assert(rb.availableRead === 10, "Should be able to write more data after resizing");
   const resizedData = rb.drain();
   assert(resizedData.length === 10 && resizedData[0] === 1 && resizedData[9] === 10, "Resized data integrity check failed");
-  
+
+  // Test seek
+  rb.clear();
+  rb.write([1, 2, 3, 4, 5]);
+  assert(rb.seek(2) === true, "Seek forward should succeed");
+  assert(rb.availableRead === 3, "Available read should decrease after seek");
+  assert(rb.readByte() === 3, "Read after seek should return correct byte");
+  assert(rb.seek(10) === false, "Seek beyond capacity should fail");
+  assert(rb.seek(-1) === false, "Backward seek should fail");
+
   console.log("All tests passed!");
 }
 
