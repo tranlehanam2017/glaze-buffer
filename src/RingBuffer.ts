@@ -51,6 +51,16 @@ export class RingBuffer {
     return output;
   }
 
+  public readByte(): number | null {
+    if (this.count === 0) return null;
+    
+    const byte = this.buffer[this.readOffset];
+    this.readOffset = (this.readOffset + 1) % this.size;
+    this.count--;
+    
+    return byte;
+  }
+
   public readExactly(length: number): Uint8Array | null {
     if (this.count < length) return null;
     return this.read(length);

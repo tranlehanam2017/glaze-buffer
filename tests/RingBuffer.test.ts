@@ -62,6 +62,13 @@ function testRingBuffer() {
   assert(exact2 !== null && exact2.length === 2 && exact2[0] === 10 && exact2[1] === 20, "readExactly read failed");
   assert(rb.availableRead === 1, "Available read should be 1 after readExactly");
 
+  // Test readByte
+  rb.clear();
+  rb.write([1, 2]);
+  assert(rb.readByte() === 1, "readByte should return 1");
+  assert(rb.readByte() === 2, "readByte should return 2");
+  assert(rb.readByte() === null, "readByte should return null when empty");
+
   // Test resize
   rb.clear();
   rb.write([1, 2, 3]);
