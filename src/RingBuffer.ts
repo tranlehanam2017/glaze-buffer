@@ -69,6 +69,22 @@ export class RingBuffer {
     return this.writeUint32(value);
   }
 
+  public writeFloat32(value: number): boolean {
+    if (this.availableWrite < 4) return false;
+    const buf = new ArrayBuffer(4);
+    new DataView(buf).setFloat32(0, value, false);
+    this.write(new Uint8Array(buf));
+    return true;
+  }
+
+  public writeFloat64(value: number): boolean {
+    if (this.availableWrite < 8) return false;
+    const buf = new ArrayBuffer(8);
+    new DataView(buf).setFloat64(0, value, false);
+    this.write(new Uint8Array(buf));
+    return true;
+  }
+
   public read(length: number): Uint8Array {
     const bytesToRead = Math.min(length, this.count);
     if (bytesToRead === 0) return new Uint8Array(0);
