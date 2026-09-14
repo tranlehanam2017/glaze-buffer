@@ -137,6 +137,14 @@ function testRingBuffer() {
   assert(rb.readString(encodedStr.length) === testStr, "readString mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading string");
 
+  // Test prefixed string writes and reads
+  rb.clear();
+  rb.resize(60);
+  const prefixStr = "Prefixed World";
+  assert(rb.writePrefixedString(prefixStr) === true, "writePrefixedString failed");
+  assert(rb.readPrefixedString() === prefixStr, "readPrefixedString mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading prefixed string");
+
   // Test boolean writes and reads
   rb.clear();
   assert(rb.writeBoolean(true) === true, "writeBoolean(true) failed");

@@ -97,6 +97,16 @@ export class RingBuffer {
     return true;
   }
 
+  public writePrefixedString(value: string): boolean {
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(value);
+    if (this.availableWrite < 4 + encoded.length) return false;
+    
+    this.writeUint32(encoded.length);
+    this.write(encoded);
+    return true;
+  }
+
   public read(length: number): Uint8Array {
     const bytesToRead = Math.min(length, this.count);
     if (bytesToRead === 0) return new Uint8Array(0);
@@ -186,6 +196,12 @@ export class RingBuffer {
     const bytes = this.read(length);
     const decoder = new TextDecoder();
     return decoder.decode(bytes);
+  }
+
+  public readPrefixedString(): string | null {
+    const length = this.readUint32();
+    if (length === null) return null;
+    return this.readString(length);
   }
 
   public readExactly(length: number): Uint8Array | null {
