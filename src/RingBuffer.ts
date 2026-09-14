@@ -135,6 +135,18 @@ export class RingBuffer {
     return val < 2147483648 ? val : val - 4294967296;
   }
 
+  public readFloat32(): number | null {
+    if (this.count < 4) return null;
+    const bytes = this.read(4);
+    return new DataView(bytes.buffer).getFloat32(0, false);
+  }
+
+  public readFloat64(): number | null {
+    if (this.count < 8) return null;
+    const bytes = this.read(8);
+    return new DataView(bytes.buffer).getFloat64(0, false);
+  }
+
   public readExactly(length: number): Uint8Array | null {
     if (this.count < length) return null;
     return this.read(length);

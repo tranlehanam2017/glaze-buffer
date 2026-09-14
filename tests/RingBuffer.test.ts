@@ -119,6 +119,17 @@ function testRingBuffer() {
   assert(rb.readUint32() === 0xDEADBEEF, "Read back writeUint32 mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading written primitives");
 
+  // Test float reads
+  rb.clear();
+  rb.resize(20);
+  const floatView = new DataView(new ArrayBuffer(12));
+  floatView.setFloat32(0, 1.23, false);
+  floatView.setFloat64(4, 4.5678, false);
+  rb.write(new Uint8Array(floatView.buffer));
+  
+  assert(Math.abs((rb.readFloat32() || 0) - 1.23) < 0.0001, "readFloat32 failed");
+  assert(Math.abs((rb.readFloat64() || 0) - 4.5678) < 0.0001, "readFloat64 failed");
+
   console.log("All tests passed!");
 }
 
