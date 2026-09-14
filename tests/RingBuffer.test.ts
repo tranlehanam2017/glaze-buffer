@@ -128,6 +128,15 @@ function testRingBuffer() {
   assert(Math.abs((rb.readFloat32() || 0) - 1.23) < 0.0001, "readFloat32 failed");
   assert(Math.abs((rb.readFloat64() || 0) - 4.5678) < 0.0001, "readFloat64 failed");
 
+  // Test string writes and reads
+  rb.clear();
+  rb.resize(30);
+  const testStr = "Hello 🚀";
+  assert(rb.writeString(testStr) === true, "writeString failed");
+  const encodedStr = new TextEncoder().encode(testStr);
+  assert(rb.readString(encodedStr.length) === testStr, "readString mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading string");
+
   console.log("All tests passed!");
 }
 

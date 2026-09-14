@@ -85,6 +85,14 @@ export class RingBuffer {
     return true;
   }
 
+  public writeString(value: string): boolean {
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(value);
+    if (this.availableWrite < encoded.length) return false;
+    this.write(encoded);
+    return true;
+  }
+
   public read(length: number): Uint8Array {
     const bytesToRead = Math.min(length, this.count);
     if (bytesToRead === 0) return new Uint8Array(0);
@@ -161,6 +169,13 @@ export class RingBuffer {
     if (this.count < 8) return null;
     const bytes = this.read(8);
     return new DataView(bytes.buffer).getFloat64(0, false);
+  }
+
+  public readString(length: number): string | null {
+    if (this.count < length) return null;
+    const bytes = this.read(length);
+    const decoder = new TextDecoder();
+    return decoder.decode(bytes);
   }
 
   public readExactly(length: number): Uint8Array | null {
