@@ -107,6 +107,18 @@ function testRingBuffer() {
   assert(rb.seek(10) === false, "Seek beyond capacity should fail");
   assert(rb.seek(-1) === false, "Backward seek should fail");
 
+  // Test primitive write helpers
+  rb.clear();
+  rb.resize(10);
+  assert(rb.writeUint8(255) === true, "writeUint8 failed");
+  assert(rb.writeUint16(0x1234) === true, "writeUint16 failed");
+  assert(rb.writeUint32(0xDEADBEEF) === true, "writeUint32 failed");
+  
+  assert(rb.readUint8() === 255, "Read back writeUint8 mismatch");
+  assert(rb.readUint16() === 0x1234, "Read back writeUint16 mismatch");
+  assert(rb.readUint32() === 0xDEADBEEF, "Read back writeUint32 mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading written primitives");
+
   console.log("All tests passed!");
 }
 

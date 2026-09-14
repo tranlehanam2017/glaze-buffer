@@ -31,6 +31,44 @@ export class RingBuffer {
     return bytesToWrite;
   }
 
+  public writeUint8(value: number): boolean {
+    if (this.availableWrite < 1) return false;
+    this.write([value & 0xFF]);
+    return true;
+  }
+
+  public writeInt8(value: number): boolean {
+    return this.writeUint8(value);
+  }
+
+  public writeUint16(value: number): boolean {
+    if (this.availableWrite < 2) return false;
+    this.write([
+      (value >>> 8) & 0xFF,
+      value & 0xFF
+    ]);
+    return true;
+  }
+
+  public writeInt16(value: number): boolean {
+    return this.writeUint16(value);
+  }
+
+  public writeUint32(value: number): boolean {
+    if (this.availableWrite < 4) return false;
+    this.write([
+      (value >>> 24) & 0xFF,
+      (value >>> 16) & 0xFF,
+      (value >>> 8) & 0xFF,
+      value & 0xFF
+    ]);
+    return true;
+  }
+
+  public writeInt32(value: number): boolean {
+    return this.writeUint32(value);
+  }
+
   public read(length: number): Uint8Array {
     const bytesToRead = Math.min(length, this.count);
     if (bytesToRead === 0) return new Uint8Array(0);
