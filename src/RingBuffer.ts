@@ -65,6 +65,12 @@ export class RingBuffer {
     return this.readByte();
   }
 
+  public readInt8(): number | null {
+    const byte = this.readUint8();
+    if (byte === null) return null;
+    return byte < 128 ? byte : byte - 256;
+  }
+
   public readUint16(): number | null {
     if (this.count < 2) return null;
     const bytes = this.read(2);
@@ -72,11 +78,23 @@ export class RingBuffer {
     return (bytes[0] << 8) | bytes[1];
   }
 
+  public readInt16(): number | null {
+    const val = this.readUint16();
+    if (val === null) return null;
+    return val < 32768 ? val : val - 65536;
+  }
+
   public readUint32(): number | null {
     if (this.count < 4) return null;
     const bytes = this.read(4);
     // Big-endian read
     return ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0;
+  }
+
+  public readInt32(): number | null {
+    const val = this.readUint32();
+    if (val === null) return null;
+    return val < 2147483648 ? val : val - 4294967296;
   }
 
   public readExactly(length: number): Uint8Array | null {

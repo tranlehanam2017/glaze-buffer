@@ -79,6 +79,14 @@ function testRingBuffer() {
   assert(rb.readUint32() === 10, "readUint32 failed");
   assert(rb.isEmpty(), "Buffer should be empty after reading primitives");
 
+  // Test signed primitive read helpers
+  rb.clear();
+  rb.write([255, 255, 255, 255, 0, 1, 255, 255, 255, 255, 255, 255]);
+  assert(rb.readInt8() === -1, "readInt8 failed");
+  assert(rb.readInt16() === -1, "readInt16 failed");
+  assert(rb.readInt32() === -1, "readInt32 failed");
+  assert(rb.isEmpty(), "Buffer should be empty after reading signed primitives");
+
   // Test resize
   rb.clear();
   rb.write([1, 2, 3]);
