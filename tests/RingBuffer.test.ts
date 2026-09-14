@@ -137,6 +137,14 @@ function testRingBuffer() {
   assert(rb.readString(encodedStr.length) === testStr, "readString mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading string");
 
+  // Test boolean writes and reads
+  rb.clear();
+  assert(rb.writeBoolean(true) === true, "writeBoolean(true) failed");
+  assert(rb.writeBoolean(false) === true, "writeBoolean(false) failed");
+  assert(rb.readBoolean() === true, "readBoolean(true) mismatch");
+  assert(rb.readBoolean() === false, "readBoolean(false) mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading booleans");
+
   console.log("All tests passed!");
 }
 

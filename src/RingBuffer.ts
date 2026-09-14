@@ -41,6 +41,10 @@ export class RingBuffer {
     return this.writeUint8(value);
   }
 
+  public writeBoolean(value: boolean): boolean {
+    return this.writeUint8(value ? 1 : 0);
+  }
+
   public writeUint16(value: number): boolean {
     if (this.availableWrite < 2) return false;
     this.write([
@@ -131,6 +135,12 @@ export class RingBuffer {
     const byte = this.readUint8();
     if (byte === null) return null;
     return byte < 128 ? byte : byte - 256;
+  }
+
+  public readBoolean(): boolean | null {
+    const byte = this.readUint8();
+    if (byte === null) return null;
+    return byte !== 0;
   }
 
   public readUint16(): number | null {
