@@ -153,6 +153,14 @@ function testRingBuffer() {
   assert(rb.readBoolean() === false, "readBoolean(false) mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading booleans");
 
+  // Test iterator
+  rb.clear();
+  rb.resize(5);
+  rb.write([1, 2, 3]);
+  const iterated = [...rb];
+  assert(iterated.length === 3 && iterated[0] === 1 && iterated[2] === 3, "Iterator failed");
+  assert(rb.availableRead === 3, "Iterator should not consume data");
+
   console.log("All tests passed!");
 }
 

@@ -288,4 +288,12 @@ export class RingBuffer {
     this.writeOffset = 0;
     this.count = 0;
   }
+
+  *[Symbol.iterator](): Iterator<number> {
+    let current = 0;
+    while (current < this.count) {
+      yield this.buffer[(this.readOffset + current) % this.size];
+      current++;
+    }
+  }
 }
