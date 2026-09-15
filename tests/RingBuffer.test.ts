@@ -188,6 +188,19 @@ function testRingBuffer() {
   assert(rb.availableRead === 7, "Destination should now have 7 bytes");
   assert(src.availableRead === 2, "Source should still have 2 bytes");
 
+  // Test readAvailable
+  rb.clear();
+  rb.write([1, 2, 3]);
+  const available = rb.readAvailable();
+  assert(available.length === 3 && available[0] === 1 && available[2] === 3, "readAvailable failed");
+  assert(rb.isEmpty(), "Buffer should be empty after readAvailable");
+
+  // Test boundary cases
+  rb.clear();
+  assert(rb.write([]) === 0, "Writing empty array should return 0");
+  assert(rb.read(0).length === 0, "Reading 0 bytes should return empty array");
+  assert(rb.read(100).length === 0, "Reading more than available from empty buffer should return empty array");
+
   console.log("All tests passed!");
 }
 
