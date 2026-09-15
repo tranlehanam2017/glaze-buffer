@@ -172,6 +172,22 @@ function testRingBuffer() {
   assert(rb.readInt64() === signedBigVal, "readInt64 mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading 64-bit integers");
 
+  // Test copyFrom
+  rb.clear();
+  rb.resize(10);
+  const src = new RingBuffer(10);
+  src.write([1, 2, 3, 4, 5]);
+  const copied = rb.copyFrom(src);
+  assert(copied === 5, "copyFrom should return number of bytes copied");
+  assert(rb.availableRead === 5, "Destination buffer should have 5 bytes");
+  assert(src.isEmpty(), "Source buffer should be empty after copyFrom");
+  
+  src.write([6, 7, 8, 9]);
+  const partialCopied = rb.copyFrom(src, 2);
+  assert(partialCopied === 2, "Partial copyFrom failed");
+  assert(rb.availableRead === 7, "Destination should now have 7 bytes");
+  assert(src.availableRead === 2, "Source should still have 2 bytes");
+
   console.log("All tests passed!");
 }
 

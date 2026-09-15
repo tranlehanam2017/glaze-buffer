@@ -317,6 +317,20 @@ export class RingBuffer {
     this.count = 0;
   }
 
+  /**
+   * Copies data from another RingBuffer into this one.
+   * @param other The source RingBuffer
+   * @param length The maximum number of bytes to copy. If -1, copies all available data.
+   * @returns The number of bytes actually copied.
+   */
+  public copyFrom(other: RingBuffer, length: number = -1): number {
+    const bytesToCopy = length === -1 ? other.availableRead : Math.min(length, other.availableRead);
+    if (bytesToCopy === 0) return 0;
+
+    const data = other.read(bytesToCopy);
+    return this.write(data);
+  }
+
   *[Symbol.iterator](): Iterator<number> {
     let current = 0;
     while (current < this.count) {
