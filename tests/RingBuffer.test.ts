@@ -161,6 +161,17 @@ function testRingBuffer() {
   assert(iterated.length === 3 && iterated[0] === 1 && iterated[2] === 3, "Iterator failed");
   assert(rb.availableRead === 3, "Iterator should not consume data");
 
+  // Test 64-bit integer writes and reads
+  rb.clear();
+  rb.resize(20);
+  const bigVal = 12345678901234567890n;
+  const signedBigVal = -9876543210987654321n;
+  assert(rb.writeUint64(bigVal) === true, "writeUint64 failed");
+  assert(rb.writeInt64(signedBigVal) === true, "writeInt64 failed");
+  assert(rb.readUint64() === bigVal, "readUint64 mismatch");
+  assert(rb.readInt64() === signedBigVal, "readInt64 mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading 64-bit integers");
+
   console.log("All tests passed!");
 }
 
