@@ -246,24 +246,39 @@ export class RingBuffer {
   }
 
   public peek(length: number): Uint8Array {
-    const bytesToPeek = Math.min(length, this.count);
-    if (bytesToPeek === 0) return new Uint8Array(0);
+    return this.slice(0, length);
+  }
 
-    const output = new Uint8Array(bytesToPeek);
-    const firstChunkSize = Math.min(bytesToPeek, this.size - this.readOffset);
+  public peekAll(): Uint8Array {
+    return this.slice(0, this.count);
+  }
+
+  /**
+   * Returns a copy of a portion of the available data without consuming it.
+   * @param start The start offset relative to the current read position.
+   * @param end The end offset relative to the current read position (exclusive).
+   * @returns A Uint8Array containing the requested slice.
+   */
+  public slice(start: number, end: number): Uint8Array {
+    if (start < 0) return new Uint8Array(0);
+    if (start >= this.count) return new Uint8Array(0);
+
+    const actualEnd = Math.min(end, this.count);
+    const length = Math.max(0, actualEnd - start);
+    if (length === 0) return new Uint8Array(0);
+
+    const output = new Uint8Array(length);
+    const internalStart = (this.readOffset + start) % this.size;
+    const firstChunkSize = Math.min(length, this.size - internalStart);
     
-    output.set(this.buffer.subarray(this.readOffset, this.readOffset + firstChunkSize));
+    output.set(this.buffer.subarray(internalStart, internalStart + firstChunkSize));
 
-    if (bytesToPeek > firstChunkSize) {
-      const secondChunkSize = bytesToPeek - firstChunkSize;
+    if (length > firstChunkSize) {
+      const secondChunkSize = length - firstChunkSize;
       output.set(this.buffer.subarray(0, secondChunkSize), firstChunkSize);
     }
 
     return output;
-  }
-
-  public peekAll(): Uint8Array {
-    return this.peek(this.count);
   }
 
   public resize(newCapacity: number): void {

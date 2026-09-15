@@ -195,6 +195,28 @@ function testRingBuffer() {
   assert(available.length === 3 && available[0] === 1 && available[2] === 3, "readAvailable failed");
   assert(rb.isEmpty(), "Buffer should be empty after readAvailable");
 
+  // Test slice
+  rb.clear();
+  rb.resize(10);
+  rb.write([1, 2, 3, 4, 5]);
+  const sliced = rb.slice(1, 4);
+  assert(sliced.length === 3 && sliced[0] === 2 && sliced[2] === 4, "slice mismatch");
+  assert(rb.availableRead === 5, "slice should not consume data");
+
+  // Test slice with wrap around
+  rb.clear();
+  rb.write([1, 2, 3]);
+  rb.read(2);
+  // readOffset is 2, count is 1
+  rb.write([4, 5, 6]);
+  // readOffset 2, writeOffset 0, count 4. Data: [3, 4, 5, 6]
+  const wrapSliced = rb.slice(1, 4);
+  assert(wrapSliced.length === 3 && wrapSliced[0] === 4 && wrapSliced[2] === 6, "wrap slice mismatch");
+  
+  // Test slice boundaries
+  assert(rb.slice(-1, 2).length === 0, "Negative start should return empty");
+  assert(rb.slice(10, 12).length === 0, "Start beyond count should return empty");
+
   // Test boundary cases
   rb.clear();
   assert(rb.write([]) === 0, "Writing empty array should return 0");
