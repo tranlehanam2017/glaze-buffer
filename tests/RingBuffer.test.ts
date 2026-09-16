@@ -267,6 +267,21 @@ function testRingBuffer() {
   assert(rb.canRead(4) === false, "canRead(4) should be false for 3 bytes");
   assert(rb.canRead(0) === true, "canRead(0) should always be true");
 
+  // Test readInto
+  rb.clear();
+  rb.write([10, 20, 30, 40, 50]);
+  const target = new Uint8Array(3);
+  const readCount = rb.readInto(target, 3);
+  assert(readCount === 3, "readInto should return 3");
+  assert(target[0] === 10 && target[2] === 30, "readInto data mismatch");
+  assert(rb.availableRead === 2, "readInto should consume data");
+
+  const targetSmall = new Uint8Array(2);
+  const readCountSmall = rb.readInto(targetSmall, 5);
+  assert(readCountSmall === 2, "readInto should be limited by target size");
+  assert(targetSmall[0] === 40 && targetSmall[1] === 50, "readInto small target mismatch");
+  assert(rb.isEmpty(), "readInto should have consumed remaining data");
+
   console.log("All tests passed!");
 }
 

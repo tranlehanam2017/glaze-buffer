@@ -128,19 +128,33 @@ export class RingBuffer {
     if (bytesToRead === 0) return new Uint8Array(0);
 
     const output = new Uint8Array(bytesToRead);
+    this.readInto(output, bytesToRead);
+
+    return output;
+  }
+
+  /**
+   * Reads up to 'length' bytes into the provided target buffer.
+   * @param target The destination Uint8Array.
+   * @param length The maximum number of bytes to read.
+   * @returns The number of bytes actually read into the target.
+   */
+  public readInto(target: Uint8Array, length: number): number {
+    const bytesToRead = Math.min(length, this.count, target.length);
+    if (bytesToRead === 0) return 0;
+
     const firstChunkSize = Math.min(bytesToRead, this.size - this.readOffset);
-    
-    output.set(this.buffer.subarray(this.readOffset, this.readOffset + firstChunkSize));
+    target.set(this.buffer.subarray(this.readOffset, this.readOffset + firstChunkSize), 0);
 
     if (bytesToRead > firstChunkSize) {
       const secondChunkSize = bytesToRead - firstChunkSize;
-      output.set(this.buffer.subarray(0, secondChunkSize), firstChunkSize);
+      target.set(this.buffer.subarray(0, secondChunkSize), firstChunkSize);
     }
 
     this.readOffset = (this.readOffset + bytesToRead) % this.size;
     this.count -= bytesToRead;
 
-    return output;
+    return bytesToRead;
   }
 
   public readByte(): number | null {
