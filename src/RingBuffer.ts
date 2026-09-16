@@ -253,6 +253,11 @@ export class RingBuffer {
     return this.slice(0, this.count);
   }
 
+  public peekByte(): number | null {
+    if (this.count === 0) return null;
+    return this.buffer[this.readOffset];
+  }
+
   /**
    * Returns a copy of a portion of the available data without consuming it.
    * @param start The start offset relative to the current read position.

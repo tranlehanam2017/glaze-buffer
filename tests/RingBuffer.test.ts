@@ -33,6 +33,15 @@ function testRingBuffer() {
   assert(peekedAll.length === 2 && peekedAll[0] === 10 && peekedAll[1] === 20, "peekAll data mismatch");
   assert(rb.availableRead === 2, "peekAll should not consume data");
 
+  // Test peekByte
+  rb.clear();
+  assert(rb.peekByte() === null, "peekByte should return null when empty");
+  rb.write([42]);
+  assert(rb.peekByte() === 42, "peekByte mismatch");
+  assert(rb.availableRead === 1, "peekByte should not consume data");
+  rb.readByte();
+  assert(rb.peekByte() === null, "peekByte should return null after reading all data");
+
   // Test isEmpty/isFull
   assert(rb.isEmpty() === false, "Should not be empty");
   rb.read(2);
