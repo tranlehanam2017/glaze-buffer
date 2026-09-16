@@ -389,6 +389,15 @@ export class RingBuffer {
     return this.write(data);
   }
 
+  /**
+   * Checks if the buffer contains at least the specified number of bytes.
+   * @param length The number of bytes to check for.
+   * @returns True if enough data is available, false otherwise.
+   */
+  public canRead(length: number): boolean {
+    return this.count >= length;
+  }
+
   *[Symbol.iterator](): Iterator<number> {
     let current = 0;
     while (current < this.count) {

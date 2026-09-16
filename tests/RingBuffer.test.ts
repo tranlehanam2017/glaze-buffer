@@ -259,6 +259,14 @@ function testRingBuffer() {
   rb.compact(); // Compact empty
   assert(rb.isEmpty(), "Empty buffer should stay empty after compact");
 
+  // Test canRead
+  rb.clear();
+  rb.write([1, 2, 3]);
+  assert(rb.canRead(2) === true, "canRead(2) should be true for 3 bytes");
+  assert(rb.canRead(3) === true, "canRead(3) should be true for 3 bytes");
+  assert(rb.canRead(4) === false, "canRead(4) should be false for 3 bytes");
+  assert(rb.canRead(0) === true, "canRead(0) should always be true");
+
   console.log("All tests passed!");
 }
 
