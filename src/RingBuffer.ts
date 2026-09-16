@@ -259,6 +259,18 @@ export class RingBuffer {
   }
 
   /**
+   * Returns a DataView of the available data starting from the current read position.
+   * If the data wraps around the internal buffer, it returns a view of the contiguous
+   * part starting from the read offset. Use peek() or slice() for wrapped data.
+   * @returns A DataView if data is available, otherwise null.
+   */
+  public peekView(): DataView | null {
+    if (this.count === 0) return null;
+    const contiguousLength = Math.min(this.count, this.size - this.readOffset);
+    return new DataView(this.buffer.buffer, this.buffer.byteOffset + this.readOffset, contiguousLength);
+  }
+
+  /**
    * Returns a copy of a portion of the available data without consuming it.
    * @param start The start offset relative to the current read position.
    * @param end The end offset relative to the current read position (exclusive).

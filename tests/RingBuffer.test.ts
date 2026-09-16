@@ -232,6 +232,18 @@ function testRingBuffer() {
   assert(rb.read(0).length === 0, "Reading 0 bytes should return empty array");
   assert(rb.read(100).length === 0, "Reading more than available from empty buffer should return empty array");
 
+  // Test peekView
+  rb.clear();
+  rb.resize(10);
+  rb.write([0, 0, 0, 10]); // Uint32 = 10
+  const view = rb.peekView();
+  assert(view !== null, "peekView should not be null");
+  assert(view.getUint32(0, false) === 10, "peekView read mismatch");
+  assert(rb.availableRead === 4, "peekView should not consume data");
+  
+  rb.clear();
+  assert(rb.peekView() === null, "peekView should return null when empty");
+
   console.log("All tests passed!");
 }
 
