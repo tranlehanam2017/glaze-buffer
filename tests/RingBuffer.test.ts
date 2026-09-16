@@ -244,6 +244,21 @@ function testRingBuffer() {
   rb.clear();
   assert(rb.peekView() === null, "peekView should return null when empty");
 
+  // Test compact
+  rb.clear();
+  rb.resize(10);
+  rb.write([1, 2, 3]);
+  rb.read(2); // readOffset = 2, count = 1
+  rb.write([4, 5, 6]); // writeOffset = (2+3)%10 = 5, count = 4. Data: [3, 4, 5, 6]
+  rb.compact();
+  assert(rb.availableRead === 4, "Count should be preserved after compact");
+  const compactedData = rb.drain();
+  assert(compactedData.length === 4 && compactedData[0] === 3 && compactedData[3] === 6, "Compact data mismatch");
+  
+  rb.clear();
+  rb.compact(); // Compact empty
+  assert(rb.isEmpty(), "Empty buffer should stay empty after compact");
+
   console.log("All tests passed!");
 }
 

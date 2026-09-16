@@ -354,6 +354,28 @@ export class RingBuffer {
   }
 
   /**
+   * Normalizes the internal buffer by moving available data to the start of the buffer.
+   * This maximizes the contiguous free space at the end of the buffer.
+   */
+  public compact(): void {
+    if (this.count === 0) {
+      this.readOffset = 0;
+      this.writeOffset = 0;
+      return;
+    }
+
+    if (this.readOffset === 0) {
+      // Data is already at the start
+      return;
+    }
+
+    const data = this.peekAll();
+    this.buffer.set(data, 0);
+    this.readOffset = 0;
+    this.writeOffset = this.count;
+  }
+
+  /**
    * Copies data from another RingBuffer into this one.
    * @param other The source RingBuffer
    * @param length The maximum number of bytes to copy. If -1, copies all available data.
