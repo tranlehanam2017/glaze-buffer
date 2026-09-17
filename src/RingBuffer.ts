@@ -52,13 +52,14 @@ export class RingBuffer {
   public writeUint16(value: number): boolean {
     if (this.availableWrite < 2) return false;
     
-    const low = value & 0xFF;
     const high = (value >>> 8) & 0xFF;
+    const low = value & 0xFF;
     
-    if (this.writeOffset + 1 < this.size) {
+    const nextOffset = this.writeOffset + 1;
+    if (nextOffset < this.size) {
       this.buffer[this.writeOffset] = high;
-      this.buffer[this.writeOffset + 1] = low;
-      this.writeOffset += 2;
+      this.buffer[nextOffset] = low;
+      this.writeOffset = nextOffset + 1;
     } else {
       this.buffer[this.writeOffset] = high;
       this.buffer[0] = low;
