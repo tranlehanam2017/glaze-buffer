@@ -4,6 +4,8 @@ export class RingBuffer {
   private writeOffset: number = 0;
   private size: number;
   private count: number = 0;
+  private scratch = new Uint8Array(8); // Reusable buffer for primitives
+  private scratchView = new DataView(this.scratch.buffer);
 
   constructor(capacity: number) {
     this.size = capacity;
@@ -33,7 +35,9 @@ export class RingBuffer {
 
   public writeUint8(value: number): boolean {
     if (this.availableWrite < 1) return false;
-    this.write([value & 0xFF]);
+    this.buffer[this.writeOffset] = value & 0xFF;
+    this.writeOffset = (this.writeOffset + 1) % this.size;
+    this.count++;
     return true;
   }
 
@@ -47,61 +51,57 @@ export class RingBuffer {
 
   public writeUint16(value: number): boolean {
     if (this.availableWrite < 2) return false;
-    this.write([
-      (value >>> 8) & 0xFF,
-      value & 0xFF
-    ]);
+    this.scratchView.setUint16(0, value, false);
+    this.write(this.scratch.subarray(0, 2));
     return true;
   }
 
   public writeInt16(value: number): boolean {
-    return this.writeUint16(value);
+    if (this.availableWrite < 2) return false;
+    this.scratchView.setInt16(0, value, false);
+    this.write(this.scratch.subarray(0, 2));
+    return true;
   }
 
   public writeUint32(value: number): boolean {
     if (this.availableWrite < 4) return false;
-    this.write([
-      (value >>> 24) & 0xFF,
-      (value >>> 16) & 0xFF,
-      (value >>> 8) & 0xFF,
-      value & 0xFF
-    ]);
+    this.scratchView.setUint32(0, value, false);
+    this.write(this.scratch.subarray(0, 4));
     return true;
   }
 
   public writeInt32(value: number): boolean {
-    return this.writeUint32(value);
+    if (this.availableWrite < 4) return false;
+    this.scratchView.setInt32(0, value, false);
+    this.write(this.scratch.subarray(0, 4));
+    return true;
   }
 
   public writeUint64(value: bigint): boolean {
     if (this.availableWrite < 8) return false;
-    const buf = new ArrayBuffer(8);
-    new DataView(buf).setBigUint64(0, value, false);
-    this.write(new Uint8Array(buf));
+    this.scratchView.setBigUint64(0, value, false);
+    this.write(this.scratch.subarray(0, 8));
     return true;
   }
 
   public writeInt64(value: bigint): boolean {
     if (this.availableWrite < 8) return false;
-    const buf = new ArrayBuffer(8);
-    new DataView(buf).setBigInt64(0, value, false);
-    this.write(new Uint8Array(buf));
+    this.scratchView.setBigInt64(0, value, false);
+    this.write(this.scratch.subarray(0, 8));
     return true;
   }
 
   public writeFloat32(value: number): boolean {
     if (this.availableWrite < 4) return false;
-    const buf = new ArrayBuffer(4);
-    new DataView(buf).setFloat32(0, value, false);
-    this.write(new Uint8Array(buf));
+    this.scratchView.setFloat32(0, value, false);
+    this.write(this.scratch.subarray(0, 4));
     return true;
   }
 
   public writeFloat64(value: number): boolean {
     if (this.availableWrite < 8) return false;
-    const buf = new ArrayBuffer(8);
-    new DataView(buf).setFloat64(0, value, false);
-    this.write(new Uint8Array(buf));
+    this.scratchView.setFloat64(0, value, false);
+    this.write(this.scratch.subarray(0, 8));
     return true;
   }
 
