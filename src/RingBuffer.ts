@@ -51,16 +51,26 @@ export class RingBuffer {
 
   public writeUint16(value: number): boolean {
     if (this.availableWrite < 2) return false;
-    this.scratchView.setUint16(0, value, false);
-    this.write(this.scratch.subarray(0, 2));
+    
+    const low = value & 0xFF;
+    const high = (value >>> 8) & 0xFF;
+    
+    if (this.writeOffset + 1 < this.size) {
+      this.buffer[this.writeOffset] = high;
+      this.buffer[this.writeOffset + 1] = low;
+      this.writeOffset += 2;
+    } else {
+      this.buffer[this.writeOffset] = high;
+      this.buffer[0] = low;
+      this.writeOffset = 1;
+    }
+    
+    this.count += 2;
     return true;
   }
 
   public writeInt16(value: number): boolean {
-    if (this.availableWrite < 2) return false;
-    this.scratchView.setInt16(0, value, false);
-    this.write(this.scratch.subarray(0, 2));
-    return true;
+    return this.writeUint16(value);
   }
 
   public writeUint32(value: number): boolean {
@@ -174,7 +184,7 @@ export class RingBuffer {
   public readInt8(): number | null {
     const byte = this.readUint8();
     if (byte === null) return null;
-    return byte < 128 ? byte : byte - 256;
+    return (byte << 24) >> 24; // Efficient sign extension for 8-bit
   }
 
   public readBoolean(): boolean | null {
@@ -185,15 +195,20 @@ export class RingBuffer {
 
   public readUint16(): number | null {
     if (this.count < 2) return null;
-    this.readInto(this.scratch, 2);
-    const val = this.scratchView.getUint16(0, false);
-    return val;
+    
+    const high = this.buffer[this.readOffset];
+    const low = this.buffer[(this.readOffset + 1) % this.size];
+    
+    this.readOffset = (this.readOffset + 2) % this.size;
+    this.count -= 2;
+    
+    return (high << 8) | low;
   }
 
   public readInt16(): number | null {
-    if (this.count < 2) return null;
-    this.readInto(this.scratch, 2);
-    return this.scratchView.getInt16(0, false);
+    const val = this.readUint16();
+    if (val === null) return null;
+    return (val << 16) >> 16; // Efficient sign extension for 16-bit
   }
 
   public readUint32(): number | null {
