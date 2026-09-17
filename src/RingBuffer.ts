@@ -185,52 +185,51 @@ export class RingBuffer {
 
   public readUint16(): number | null {
     if (this.count < 2) return null;
-    const bytes = this.read(2);
-    // Big-endian read
-    return (bytes[0] << 8) | bytes[1];
+    this.readInto(this.scratch, 2);
+    const val = this.scratchView.getUint16(0, false);
+    return val;
   }
 
   public readInt16(): number | null {
-    const val = this.readUint16();
-    if (val === null) return null;
-    return val < 32768 ? val : val - 65536;
+    if (this.count < 2) return null;
+    this.readInto(this.scratch, 2);
+    return this.scratchView.getInt16(0, false);
   }
 
   public readUint32(): number | null {
     if (this.count < 4) return null;
-    const bytes = this.read(4);
-    // Big-endian read
-    return ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0;
+    this.readInto(this.scratch, 4);
+    return this.scratchView.getUint32(0, false);
   }
 
   public readInt32(): number | null {
-    const val = this.readUint32();
-    if (val === null) return null;
-    return val < 2147483648 ? val : val - 4294967296;
+    if (this.count < 4) return null;
+    this.readInto(this.scratch, 4);
+    return this.scratchView.getInt32(0, false);
   }
 
   public readUint64(): bigint | null {
     if (this.count < 8) return null;
-    const bytes = this.read(8);
-    return new DataView(bytes.buffer).getBigUint64(0, false);
+    this.readInto(this.scratch, 8);
+    return this.scratchView.getBigUint64(0, false);
   }
 
   public readInt64(): bigint | null {
     if (this.count < 8) return null;
-    const bytes = this.read(8);
-    return new DataView(bytes.buffer).getBigInt64(0, false);
+    this.readInto(this.scratch, 8);
+    return this.scratchView.getBigInt64(0, false);
   }
 
   public readFloat32(): number | null {
     if (this.count < 4) return null;
-    const bytes = this.read(4);
-    return new DataView(bytes.buffer).getFloat32(0, false);
+    this.readInto(this.scratch, 4);
+    return this.scratchView.getFloat32(0, false);
   }
 
   public readFloat64(): number | null {
     if (this.count < 8) return null;
-    const bytes = this.read(8);
-    return new DataView(bytes.buffer).getFloat64(0, false);
+    this.readInto(this.scratch, 8);
+    return this.scratchView.getFloat64(0, false);
   }
 
   public readString(length: number): string | null {
