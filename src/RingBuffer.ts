@@ -74,46 +74,51 @@ export class RingBuffer {
     return this.writeUint16(value);
   }
 
-  public writeUint32(value: number): boolean {
-    if (this.availableWrite < 4) return false;
-    this.scratchView.setUint32(0, value, false);
-    this.write(this.scratch.subarray(0, 4));
+  private writePrimitives(bytes: number): boolean {
+    const space = this.availableWrite;
+    if (space < bytes) return false;
+
+    const firstChunkSize = Math.min(bytes, this.size - this.writeOffset);
+    this.buffer.set(this.scratch.subarray(0, firstChunkSize), this.writeOffset);
+
+    if (bytes > firstChunkSize) {
+      const secondChunkSize = bytes - firstChunkSize;
+      this.buffer.set(this.scratch.subarray(firstChunkSize, bytes), 0);
+    }
+
+    this.writeOffset = (this.writeOffset + bytes) % this.size;
+    this.count += bytes;
     return true;
+  }
+
+  public writeUint32(value: number): boolean {
+    this.scratchView.setUint32(0, value, false);
+    return this.writePrimitives(4);
   }
 
   public writeInt32(value: number): boolean {
-    if (this.availableWrite < 4) return false;
     this.scratchView.setInt32(0, value, false);
-    this.write(this.scratch.subarray(0, 4));
-    return true;
+    return this.writePrimitives(4);
   }
 
   public writeUint64(value: bigint): boolean {
-    if (this.availableWrite < 8) return false;
     this.scratchView.setBigUint64(0, value, false);
-    this.write(this.scratch.subarray(0, 8));
-    return true;
+    return this.writePrimitives(8);
   }
 
   public writeInt64(value: bigint): boolean {
-    if (this.availableWrite < 8) return false;
     this.scratchView.setBigInt64(0, value, false);
-    this.write(this.scratch.subarray(0, 8));
-    return true;
+    return this.writePrimitives(8);
   }
 
   public writeFloat32(value: number): boolean {
-    if (this.availableWrite < 4) return false;
     this.scratchView.setFloat32(0, value, false);
-    this.write(this.scratch.subarray(0, 4));
-    return true;
+    return this.writePrimitives(4);
   }
 
   public writeFloat64(value: number): boolean {
-    if (this.availableWrite < 8) return false;
     this.scratchView.setFloat64(0, value, false);
-    this.write(this.scratch.subarray(0, 8));
-    return true;
+    return this.writePrimitives(8);
   }
 
   public writeString(value: string): boolean {
