@@ -35,6 +35,34 @@ export class RingBuffer {
     return bytesToWrite;
   }
 
+  /**
+   * Writes exactly the specified number of bytes from the source buffer.
+   * @param source The source Uint8Array.
+   * @param length The number of bytes to write.
+   * @returns True if the write was successful, false if insufficient space exists.
+   */
+  public writeExactly(source: Uint8Array, length: number): boolean {
+    if (this.availableWrite < length) return false;
+    this.write(source.subarray(0, length));
+    return true;
+  }
+
+  /**
+   * Writes data from a source buffer starting at a specific offset.
+   * @param source The source Uint8Array.
+   * @param offset The offset in the source buffer to start reading from.
+   * @param length The maximum number of bytes to write.
+   * @returns The number of bytes actually written.
+   */
+  public writeInto(source: Uint8Array, offset: number, length: number): number {
+    if (offset < 0 || offset >= source.length) return 0;
+    const availableInSource = source.length - offset;
+    const bytesToWrite = Math.min(length, availableInSource, this.availableWrite);
+    if (bytesToWrite === 0) return 0;
+
+    return this.write(source.subarray(offset, offset + bytesToWrite));
+  }
+
   public writeUint8(value: number): boolean {
     if (this.availableWrite < 1) return false;
     this.buffer[this.writeOffset] = value & 0xFF;

@@ -290,6 +290,24 @@ function testRingBuffer() {
   assert(rb.availableRead === 3, "peekExactly should not consume data");
   assert(rb.peekExactly(4) === null, "peekExactly should return null if insufficient data");
 
+  // Test writeExactly
+  rb.clear();
+  rb.resize(10);
+  const srcExact = new Uint8Array([1, 2, 3]);
+  assert(rb.writeExactly(srcExact, 3) === true, "writeExactly should succeed");
+  assert(rb.availableRead === 3, "writeExactly failed to write data");
+  assert(rb.writeExactly(srcExact, 8) === false, "writeExactly should fail if insufficient space");
+
+  // Test writeInto
+  rb.clear();
+  rb.resize(10);
+  const srcInto = new Uint8Array([10, 20, 30, 40, 50]);
+  const written = rb.writeInto(srcInto, 1, 3); // Write [20, 30, 40]
+  assert(written === 3, "writeInto should write 3 bytes");
+  assert(rb.availableRead === 3, "writeInto availableRead mismatch");
+  const writtenData = rb.drain();
+  assert(writtenData[0] === 20 && writtenData[2] === 40, "writeInto data mismatch");
+
   console.log("All tests passed!");
 }
 
