@@ -282,6 +282,14 @@ function testRingBuffer() {
   assert(targetSmall[0] === 40 && targetSmall[1] === 50, "readInto small target mismatch");
   assert(rb.isEmpty(), "readInto should have consumed remaining data");
 
+  // Test peekExactly
+  rb.clear();
+  rb.write([1, 2, 3]);
+  const peekedExact = rb.peekExactly(2);
+  assert(peekedExact !== null && peekedExact.length === 2 && peekedExact[0] === 1 && peekedExact[1] === 2, "peekExactly failed");
+  assert(rb.availableRead === 3, "peekExactly should not consume data");
+  assert(rb.peekExactly(4) === null, "peekExactly should return null if insufficient data");
+
   console.log("All tests passed!");
 }
 

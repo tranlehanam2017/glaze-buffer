@@ -331,6 +331,16 @@ export class RingBuffer {
     return output;
   }
 
+  /**
+   * Peeks at exactly the specified number of bytes without consuming them.
+   * @param length The number of bytes to peek.
+   * @returns A Uint8Array if enough data is available, otherwise null.
+   */
+  public peekExactly(length: number): Uint8Array | null {
+    if (this.count < length) return null;
+    return this.peek(length);
+  }
+
   public resize(newCapacity: number): void {
     if (newCapacity === this.size) return;
 
