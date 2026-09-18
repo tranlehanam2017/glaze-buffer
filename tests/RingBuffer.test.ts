@@ -282,6 +282,15 @@ function testRingBuffer() {
   assert(targetSmall[0] === 40 && targetSmall[1] === 50, "readInto small target mismatch");
   assert(rb.isEmpty(), "readInto should have consumed remaining data");
 
+  // Test readIntoAt
+  rb.clear();
+  rb.write([10, 20, 30]);
+  const targetAt = new Uint8Array(10);
+  const readCountAt = rb.readIntoAt(targetAt, 5, 3);
+  assert(readCountAt === 3, "readIntoAt should return 3");
+  assert(targetAt[5] === 10 && targetAt[7] === 30, "readIntoAt data mismatch");
+  assert(rb.isEmpty(), "readIntoAt should consume data");
+
   // Test peekExactly
   rb.clear();
   rb.write([1, 2, 3]);
