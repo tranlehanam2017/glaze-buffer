@@ -6,6 +6,8 @@ export class RingBuffer {
   private count: number = 0;
   private scratch = new Uint8Array(8); // Reusable buffer for primitives
   private scratchView = new DataView(this.scratch.buffer);
+  private encoder = new TextEncoder();
+  private decoder = new TextDecoder();
 
   constructor(capacity: number) {
     this.size = capacity;
@@ -122,16 +124,14 @@ export class RingBuffer {
   }
 
   public writeString(value: string): boolean {
-    const encoder = new TextEncoder();
-    const encoded = encoder.encode(value);
+    const encoded = this.encoder.encode(value);
     if (this.availableWrite < encoded.length) return false;
     this.write(encoded);
     return true;
   }
 
   public writePrefixedString(value: string): boolean {
-    const encoder = new TextEncoder();
-    const encoded = encoder.encode(value);
+    const encoded = this.encoder.encode(value);
     if (this.availableWrite < 4 + encoded.length) return false;
     
     this.writeUint32(encoded.length);
@@ -256,8 +256,7 @@ export class RingBuffer {
   public readString(length: number): string | null {
     if (this.count < length) return null;
     const bytes = this.read(length);
-    const decoder = new TextDecoder();
-    return decoder.decode(bytes);
+    return this.decoder.decode(bytes);
   }
 
   public readPrefixedString(): string | null {
@@ -371,6 +370,10 @@ export class RingBuffer {
 
   public get availableWrite(): number {
     return this.size - this.count;
+  }
+
+  public get capacity(): number {
+    return this.size;
   }
 
   public isEmpty(): boolean {
