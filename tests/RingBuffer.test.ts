@@ -291,6 +291,15 @@ function testRingBuffer() {
   assert(targetAt[5] === 10 && targetAt[7] === 30, "readIntoAt data mismatch");
   assert(rb.isEmpty(), "readIntoAt should consume data");
 
+  // Test readIntoView
+  rb.clear();
+  rb.write([0, 0, 0, 15]);
+  const viewTarget = new DataView(new ArrayBuffer(8));
+  const readCountView = rb.readIntoView(viewTarget, 2, 4);
+  assert(readCountView === 4, "readIntoView should return 4");
+  assert(viewTarget.getUint32(2, false) === 15, "readIntoView data mismatch");
+  assert(rb.isEmpty(), "readIntoView should consume data");
+
   // Test peekExactly
   rb.clear();
   rb.write([1, 2, 3]);

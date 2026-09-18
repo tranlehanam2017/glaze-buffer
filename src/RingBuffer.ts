@@ -215,6 +215,18 @@ export class RingBuffer {
     return bytesToRead;
   }
 
+  /**
+   * Reads up to 'length' bytes into the buffer associated with the provided DataView.
+   * @param view The destination DataView.
+   * @param offset The offset in the DataView's buffer to start writing data.
+   * @param length The maximum number of bytes to read.
+   * @returns The number of bytes actually read into the view.
+   */
+  public readIntoView(view: DataView, offset: number, length: number): number {
+    const target = new Uint8Array(view.buffer, view.byteOffset + offset, view.byteLength - offset);
+    return this.readIntoAt(target, 0, length);
+  }
+
   public readByte(): number | null {
     if (this.count === 0) return null;
     
