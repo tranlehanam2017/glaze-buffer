@@ -85,17 +85,10 @@ export class RingBuffer {
     const high = (value >>> 8) & 0xFF;
     const low = value & 0xFF;
     
-    const nextOffset = this.writeOffset + 1;
-    if (nextOffset < this.size) {
-      this.buffer[this.writeOffset] = high;
-      this.buffer[nextOffset] = low;
-      this.writeOffset = nextOffset + 1;
-    } else {
-      this.buffer[this.writeOffset] = high;
-      this.buffer[0] = low;
-      this.writeOffset = 1;
-    }
+    this.buffer[this.writeOffset] = high;
+    this.buffer[(this.writeOffset + 1) % this.size] = low;
     
+    this.writeOffset = (this.writeOffset + 2) % this.size;
     this.count += 2;
     return true;
   }
