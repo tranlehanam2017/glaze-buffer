@@ -116,6 +116,15 @@ function testRingBuffer() {
   assert(rb.seek(10) === false, "Seek beyond capacity should fail");
   assert(rb.seek(-1) === false, "Backward seek should fail");
 
+  // Test seekTo
+  rb.clear();
+  rb.write([1, 2, 3, 4, 5]);
+  assert(rb.seekTo(2) === true, "seekTo(2) should succeed");
+  assert(rb.availableRead === 3, "Available read should be 3 after seekTo(2)");
+  assert(rb.readByte() === 3, "Read after seekTo should return correct byte");
+  assert(rb.seekTo(10) === false, "seekTo beyond available data should fail");
+  assert(rb.seekTo(-1) === false, "seekTo negative should fail");
+
   // Test primitive write helpers
   rb.clear();
   rb.resize(10);

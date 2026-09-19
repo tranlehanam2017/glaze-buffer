@@ -443,7 +443,8 @@ export class RingBuffer {
 
   /**
    * Moves the read pointer relative to the current position.
-   * @param offset The number of bytes to move. Positive for forward, negative for backward.
+   * @param offset The number of bytes to move. Positive for forward, negative for backward
+   * (Backward seek not supported to prevent reading overwritten data).
    * @returns True if the seek was successful, false if it would move outside the available data window.
    */
   public seek(offset: number): boolean {
@@ -454,6 +455,21 @@ export class RingBuffer {
 
     this.readOffset = (this.readOffset + offset) % this.size;
     this.count -= offset;
+    return true;
+  }
+
+  /**
+   * Seeks the read pointer to an absolute position relative to the current read head.
+   * @param position The offset from the current read head to move to. 
+   * Must be between 0 and the current count of available bytes.
+   * @returns True if the seek was successful, false otherwise.
+   */
+  public seekTo(position: number): boolean {
+    if (position < 0 || position > this.count) return false;
+
+    const currentHead = this.readOffset;
+    this.readOffset = (currentHead + position) % this.size;
+    this.count -= position;
     return true;
   }
 
