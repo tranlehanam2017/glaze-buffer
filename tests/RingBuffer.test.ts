@@ -347,6 +347,15 @@ function testRingBuffer() {
   assert(wrapPeekTarget[0] === 3 && wrapPeekTarget[3] === 6, "peekInto wrap data mismatch");
   assert(rb.availableRead === 4, "peekInto wrap should not consume data");
 
+  // Test peekIntoAt
+  rb.clear();
+  rb.write([10, 20, 30]);
+  const peekAtTarget = new Uint8Array(10);
+  const peekAtCount = rb.peekIntoAt(peekAtTarget, 5, 3);
+  assert(peekAtCount === 3, "peekIntoAt should return 3");
+  assert(peekAtTarget[5] === 10 && peekAtTarget[7] === 30, "peekIntoAt data mismatch");
+  assert(rb.availableRead === 3, "peekIntoAt should not consume data");
+
   console.log("All tests passed!");
 }
 

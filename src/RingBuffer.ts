@@ -357,15 +357,30 @@ export class RingBuffer {
    * @returns The number of bytes actually peeked into the target.
    */
   public peekInto(target: Uint8Array, length: number): number {
-    const bytesToPeek = Math.min(length, this.count, target.length);
+    return this.peekIntoAt(target, 0, length);
+  }
+
+  /**
+   * Peeks up to 'length' bytes into the provided target buffer starting at the specified offset
+   * without consuming data.
+   * @param target The destination Uint8Array.
+   * @param offset The offset in the target buffer to start writing data.
+   * @param length The maximum number of bytes to peek.
+   * @returns The number of bytes actually peeked into the target.
+   */
+  public peekIntoAt(target: Uint8Array, offset: number, length: number): number {
+    if (offset < 0 || offset >= target.length) return 0;
+
+    const availableInTarget = target.length - offset;
+    const bytesToPeek = Math.min(length, this.count, availableInTarget);
     if (bytesToPeek === 0) return 0;
 
     const firstChunkSize = Math.min(bytesToPeek, this.size - this.readOffset);
-    target.set(this.buffer.subarray(this.readOffset, this.readOffset + firstChunkSize), 0);
+    target.set(this.buffer.subarray(this.readOffset, this.readOffset + firstChunkSize), offset);
 
     if (bytesToPeek > firstChunkSize) {
       const secondChunkSize = bytesToPeek - firstChunkSize;
-      target.set(this.buffer.subarray(0, secondChunkSize), firstChunkSize);
+      target.set(this.buffer.subarray(0, secondChunkSize), offset + firstChunkSize);
     }
 
     return bytesToPeek;
