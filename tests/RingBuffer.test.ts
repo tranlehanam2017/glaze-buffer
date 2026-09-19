@@ -326,6 +326,27 @@ function testRingBuffer() {
   const writtenData = rb.drain();
   assert(writtenData[0] === 20 && writtenData[2] === 40, "writeInto data mismatch");
 
+  // Test peekInto
+  rb.clear();
+  rb.write([1, 2, 3, 4, 5]);
+  const peekTarget = new Uint8Array(3);
+  const peekedCount = rb.peekInto(peekTarget, 3);
+  assert(peekedCount === 3, "peekInto should return 3");
+  assert(peekTarget[0] === 1 && peekTarget[2] === 3, "peekInto data mismatch");
+  assert(rb.availableRead === 5, "peekInto should not consume data");
+
+  // Test peekInto wrap around
+  rb.clear();
+  rb.resize(5);
+  rb.write([1, 2, 3]);
+  rb.read(2); // readOffset = 2, count = 1. Data: [3]
+  rb.write([4, 5, 6]); // readOffset 2, writeOffset 0, count 4. Data: [3, 4, 5, 6]
+  const wrapPeekTarget = new Uint8Array(4);
+  const wrapPeekedCount = rb.peekInto(wrapPeekTarget, 4);
+  assert(wrapPeekedCount === 4, "peekInto wrap should return 4");
+  assert(wrapPeekTarget[0] === 3 && wrapPeekTarget[3] === 6, "peekInto wrap data mismatch");
+  assert(rb.availableRead === 4, "peekInto wrap should not consume data");
+
   console.log("All tests passed!");
 }
 
