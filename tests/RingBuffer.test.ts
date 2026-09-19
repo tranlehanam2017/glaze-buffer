@@ -365,6 +365,18 @@ function testRingBuffer() {
   assert(peekAtTarget[5] === 10 && peekAtTarget[7] === 30, "peekIntoAt data mismatch");
   assert(rb.availableRead === 3, "peekIntoAt should not consume data");
 
+  // Test varints
+  rb.clear();
+  rb.resize(20);
+  assert(rb.writeVarUint(127) === true, "writeVarUint(127) failed");
+  assert(rb.writeVarUint(128) === true, "writeVarUint(128) failed");
+  assert(rb.writeVarUint(16384) === true, "writeVarUint(16384) failed");
+  
+  assert(rb.readVarUint() === 127, "readVarUint(127) mismatch");
+  assert(rb.readVarUint() === 128, "readVarUint(128) mismatch");
+  assert(rb.readVarUint() === 16384, "readVarUint(16384) mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading varints");
+
   console.log("All tests passed!");
 }
 

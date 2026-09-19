@@ -160,6 +160,28 @@ export class RingBuffer {
     return true;
   }
 
+  /**
+   * Writes an unsigned integer using LEB128 variable-length encoding.
+   * @param value The value to write.
+   * @returns True if successfully written, false if buffer space is insufficient.
+   */
+  public writeVarUint(value: number): boolean {
+    if (value < 0) return false;
+    // Max 5 bytes for 32-bit unsigned int in LEB128
+    if (this.availableWrite < 5) return false; 
+
+    let v = value;
+    let written = 0;
+    while (v >= 0x80) {
+      this.writeUint8((v & 0x7f) | 0x80);
+      v >>>= 7;
+      written++;
+    }
+    this.writeUint8(v & 0x7f);
+    written++;
+    return true;
+  }
+
   public read(length: number): Uint8Array {
     const bytesToRead = Math.min(length, this.count);
     if (bytesToRead === 0) return new Uint8Array(0);
@@ -315,6 +337,30 @@ export class RingBuffer {
   public readExactly(length: number): Uint8Array | null {
     if (this.count < length) return null;
     return this.read(length);
+  }
+
+  /**
+   * Reads an unsigned integer using LEB128 variable-length encoding.
+   * @returns The decoded value, or null if the buffer is empty or the varint is malformed (exceeds 5 bytes).
+   */
+  public readVarUint(): number | null {
+    let result = 0;
+    let shift = 0;
+    let bytesRead = 0;
+
+    while (true) {
+      const byte = this.readUint8();
+      if (byte === null) return null;
+
+      result |= (byte & 0x7f) << shift;
+      if ((byte & 0x80) === 0) break;
+
+      shift += 7;
+      bytesRead++;
+      if (bytesRead >= 5) return null; // Prevent overflow/malformed data
+    }
+
+    return result;
   }
 
   public drain(): Uint8Array {
