@@ -377,6 +377,34 @@ function testRingBuffer() {
   assert(rb.readVarUint() === 16384, "readVarUint(16384) mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading varints");
 
+  // Test non-destructive primitive peeks
+  rb.clear();
+  rb.resize(10);
+  rb.write([0xDE, 0xAD, 0xBE, 0xEF, 0x01, 0x02]);
+  assert(rb.peekUint8(0) === 0xDE, "peekUint8(0) failed");
+  assert(rb.peekUint8(1) === 0xAD, "peekUint8(1) failed");
+  assert(rb.peekUint16(0) === 0xDEAD, "peekUint16(0) failed");
+  assert(rb.peekUint16(2) === 0xBEEF, "peekUint16(2) failed");
+  assert(rb.peekUint32(0) === 0xDEADBEEF, "peekUint32(0) failed");
+  assert(rb.peekUint32(1) === 0xADBEEF01, "peekUint32(1) failed");
+  assert(rb.peekUint8(10) === null, "peekUint8 out of bounds should be null");
+  assert(rb.peekUint16(5) === null, "peekUint16 out of bounds should be null");
+  assert(rb.peekUint32(3) === null, "peekUint32 out of bounds should be null");
+  assert(rb.availableRead === 6, "Peek primitive should not consume data");
+
+  // Test peek primitive wrap around
+  rb.clear();
+  rb.resize(5);
+  rb.write([1, 2, 3, 4, 5]);
+  rb.read(3); // readOffset = 3, count = 2. Data: [4, 5]
+  rb.write([6, 7]); // readOffset 3, writeOffset 2, count = 4. Data: [4, 5, 6, 7]
+  assert(rb.peekUint8(0) === 4, "peekUint8 wrap start failed");
+  assert(rb.peekUint8(3) === 7, "peekUint8 wrap end failed");
+  assert(rb.peekUint16(0) === (4 << 8) | 5, "peekUint16 wrap start failed");
+  assert(rb.peekUint16(1) === (5 << 8) | 6, "peekUint16 wrap middle failed");
+  assert(rb.peekUint16(2) === (6 << 8) | 7, "peekUint16 wrap end failed");
+  assert(rb.peekUint32(0) === (4 << 24) | (5 << 16) | (6 << 8) | 7, "peekUint32 wrap failed");
+
   console.log("All tests passed!");
 }
 

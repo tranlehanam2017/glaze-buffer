@@ -470,6 +470,49 @@ export class RingBuffer {
     return this.peek(length);
   }
 
+  /**
+   * Peeks at an unsigned 8-bit integer at the specified offset without consuming data.
+   * @param offset Offset relative to the current read head.
+   * @returns The value, or null if offset is out of bounds.
+   */
+  public peekUint8(offset: number = 0): number | null {
+    if (offset < 0 || offset >= this.count) return null;
+    return this.buffer[(this.readOffset + offset) % this.size];
+  }
+
+  /**
+   * Peeks at an unsigned 16-bit integer at the specified offset without consuming data.
+   * @param offset Offset relative to the current read head.
+   * @returns The value, or null if insufficient data is available at the offset.
+   */
+  public peekUint16(offset: number = 0): number | null {
+    if (offset < 0 || offset + 2 > this.count) return null;
+    const internalOffset = (this.readOffset + offset) % this.size;
+    const high = this.buffer[internalOffset];
+    const low = this.buffer[(internalOffset + 1) % this.size];
+    return (high << 8) | low;
+  }
+
+  /**
+   * Peeks at an unsigned 32-bit integer at the specified offset without consuming data.
+   * @param offset Offset relative to the current read head.
+   * @returns The value, or null if insufficient data is available at the offset.
+   */
+  public peekUint32(offset: number = 0): number | null {
+    if (offset < 0 || offset + 4 > this.count) return null;
+    
+    // We use peekInto to handle wrap-around and then use DataView
+    const temp = new Uint8Array(4);
+    const internalReadOffset = this.readOffset;
+    
+    // Temporarily shift readOffset to use peekInto's logic
+    this.readOffset = (this.readOffset + offset) % this.size;
+    this.peekInto(temp, 4);
+    this.readOffset = internalReadOffset;
+
+    return new DataView(temp.buffer).getUint32(0, false);
+  }
+
   public resize(newCapacity: number): void {
     if (newCapacity === this.size) return;
 
