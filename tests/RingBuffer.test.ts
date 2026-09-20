@@ -377,6 +377,15 @@ function testRingBuffer() {
   assert(rb.readVarUint() === 16384, "readVarUint(16384) mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading varints");
 
+  // Test varint overflow/malformed
+  rb.clear();
+  rb.write([0x80, 0x80, 0x80, 0x80, 0x80]); // 5 bytes with MSB set = malformed
+  assert(rb.readVarUint() === null, "readVarUint should return null for 5-byte varint with MSB set");
+
+  rb.clear();
+  rb.write([0x80, 0x80, 0x80, 0x80, 0xF0]); // 5th byte > 0x0F = 32-bit overflow
+  assert(rb.readVarUint() === null, "readVarUint should return null for varint overflowing 32 bits");
+
   // Test non-destructive primitive peeks
   rb.clear();
   rb.resize(10);
