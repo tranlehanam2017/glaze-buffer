@@ -405,6 +405,16 @@ function testRingBuffer() {
   assert(rb.peekUint16(2) === (6 << 8) | 7, "peekUint16 wrap end failed");
   assert(rb.peekUint32(0) === (4 << 24) | (5 << 16) | (6 << 8) | 7, "peekUint32 wrap failed");
 
+  // Test writeAll
+  rb.clear();
+  rb.resize(10);
+  assert(rb.writeAll([1, 2, 3]) === true, "writeAll([1, 2, 3]) should succeed");
+  assert(rb.availableRead === 3, "writeAll should have written 3 bytes");
+  assert(rb.writeAll([4, 5, 6, 7, 8]) === true, "writeAll([4, 5, 6, 7, 8]) should succeed");
+  assert(rb.availableRead === 8, "writeAll should have written total 8 bytes");
+  assert(rb.writeAll([9, 10, 11]) === false, "writeAll should fail when insufficient space");
+  assert(rb.availableRead === 8, "writeAll should not have written any bytes on failure");
+
   console.log("All tests passed!");
 }
 

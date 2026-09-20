@@ -36,6 +36,19 @@ export class RingBuffer {
   }
 
   /**
+   * Writes the entire input buffer. Returns true if successful, 
+   * or false if there is insufficient space to write the whole buffer.
+   * @param data The data to write.
+   * @returns True if all data was written, false otherwise.
+   */
+  public writeAll(data: Uint8Array | number[]): boolean {
+    const input = data instanceof Uint8Array ? data : new Uint8Array(data);
+    if (this.availableWrite < input.length) return false;
+    this.write(input);
+    return true;
+  }
+
+  /**
    * Writes exactly the specified number of bytes from the source buffer.
    * @param source The source Uint8Array.
    * @param length The number of bytes to write.
