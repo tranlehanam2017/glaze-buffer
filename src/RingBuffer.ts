@@ -195,6 +195,26 @@ export class RingBuffer {
     return true;
   }
 
+  /**
+   * Writes a signed integer using LEB128 variable-length encoding.
+   * @param value The value to write.
+   * @returns True if successfully written, false if buffer space is insufficient.
+   */
+  public writeVarInt(value: number): boolean {
+    if (this.availableWrite < 5) return false;
+
+    let v = value;
+    while (true) {
+      let byte = v & 0x7f;
+      v >>= 7;
+      if ((v === 0 && (byte & 0x80) === 0) || (v === -1 && (byte & 0x80) !== 0)) {
+        this.writeUint8(byte);
+        return true;
+      }
+      this.writeUint8(byte | 0x80);
+    }
+  }
+
   public read(length: number): Uint8Array {
     const bytesToRead = Math.min(length, this.count);
     if (bytesToRead === 0) return new Uint8Array(0);
@@ -380,6 +400,39 @@ export class RingBuffer {
     }
 
     return result >>> 0; // Ensure unsigned 32-bit
+  }
+
+  /**
+   * Reads a signed integer using LEB128 variable-length encoding.
+   * @returns The decoded value, or null if the buffer is empty or the varint is malformed (exceeds 5 bytes).
+   */
+  public readVarInt(): number | null {
+    let result = 0;
+    let shift = 0;
+    let bytesRead = 0;
+
+    while (true) {
+      const byte = this.readUint8();
+      if (byte === null) return null;
+
+      result |= (byte & 0x7f) << shift;
+      shift += 7;
+      bytesRead++;
+
+      if ((byte & 0x80) === 0) {
+        // Sign extend if we have a 32-bit signed int and the last byte's sign bit is set
+        if (shift === 35 && (byte & 0x40)) {
+          // This case is for values that actually use the full range
+        }
+        // General sign extension for JS numbers (which are doubles)
+        if (shift - 7 < 31 && (byte & 0x40)) {
+          result |= (~0 << shift);
+        }
+        return result >> 0;
+      }
+
+      if (bytesRead >= 5) return null;
+    }
   }
 
   public drain(): Uint8Array {

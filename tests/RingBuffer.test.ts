@@ -386,6 +386,26 @@ function testRingBuffer() {
   rb.write([0x80, 0x80, 0x80, 0x80, 0xF0]); // 5th byte > 0x0F = 32-bit overflow
   assert(rb.readVarUint() === null, "readVarUint should return null for varint overflowing 32 bits");
 
+  // Test signed varints
+  rb.clear();
+  rb.resize(20);
+  assert(rb.writeVarInt(0) === true, "writeVarInt(0) failed");
+  assert(rb.writeVarInt(1) === true, "writeVarInt(1) failed");
+  assert(rb.writeVarInt(-1) === true, "writeVarInt(-1) failed");
+  assert(rb.writeVarInt(127) === true, "writeVarInt(127) failed");
+  assert(rb.writeVarInt(-128) === true, "writeVarInt(-128) failed");
+  assert(rb.writeVarInt(16383) === true, "writeVarInt(16383) failed");
+  assert(rb.writeVarInt(-16384) === true, "writeVarInt(-16384) failed");
+
+  assert(rb.readVarInt() === 0, "readVarInt(0) mismatch");
+  assert(rb.readVarInt() === 1, "readVarInt(1) mismatch");
+  assert(rb.readVarInt() === -1, "readVarInt(-1) mismatch");
+  assert(rb.readVarInt() === 127, "readVarInt(127) mismatch");
+  assert(rb.readVarInt() === -128, "readVarInt(-128) mismatch");
+  assert(rb.readVarInt() === 16383, "readVarInt(16383) mismatch");
+  assert(rb.readVarInt() === -16384, "readVarInt(-16384) mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading signed varints");
+
   // Test non-destructive primitive peeks
   rb.clear();
   rb.resize(10);
