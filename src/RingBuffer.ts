@@ -196,7 +196,7 @@ export class RingBuffer {
   }
 
   /**
-   * Writes a signed integer using LEB128 variable-length encoding.
+   * Writes a signed 32-bit integer using LEB128 variable-length encoding.
    * @param value The value to write.
    * @returns True if successfully written, false if buffer space is insufficient.
    */
@@ -207,7 +207,27 @@ export class RingBuffer {
     while (true) {
       let byte = v & 0x7f;
       v >>= 7;
-      if ((v === 0 && (byte & 0x80) === 0) || (v === -1 && (byte & 0x80) !== 0)) {
+      if ((v === 0 && (byte & 0x40) === 0) || (v === -1 && (byte & 0x40) !== 0)) {
+        this.writeUint8(byte);
+        return true;
+      }
+      this.writeUint8(byte | 0x80);
+    }
+  }
+
+  /**
+   * Writes a signed 64-bit integer using LEB128 variable-length encoding.
+   * @param value The BigInt value to write.
+   * @returns True if successfully written, false if buffer space is insufficient.
+   */
+  public writeVarInt64(value: bigint): boolean {
+    if (this.availableWrite < 10) return false;
+
+    let v = value;
+    while (true) {
+      let byte = Number(v & 0x7fn);
+      v >>= 7n;
+      if ((v === 0n && (byte & 0x40) === 0) || (v === -1n && (byte & 0x40) !== 0)) {
         this.writeUint8(byte);
         return true;
       }
@@ -418,7 +438,7 @@ export class RingBuffer {
   }
 
   /**
-   * Reads a signed integer using LEB128 variable-length encoding.
+   * Reads a signed 32-bit integer using LEB128 variable-length encoding.
    * @returns The decoded value, or null if the buffer is empty or the varint is malformed (exceeds 5 bytes).
    */
   public readVarInt(): number | null {
@@ -442,6 +462,34 @@ export class RingBuffer {
       }
 
       if (bytesRead >= 5) return null;
+    }
+  }
+
+  /**
+   * Reads a signed 64-bit integer using LEB128 variable-length encoding.
+   * @returns The decoded BigInt value, or null if the buffer is empty or the varint is malformed (exceeds 10 bytes).
+   */
+  public readVarInt64(): bigint | null {
+    let result = 0n;
+    let shift = 0n;
+    let bytesRead = 0;
+
+    while (true) {
+      const byte = this.readUint8();
+      if (byte === null) return null;
+
+      result |= BigInt(byte & 0x7f) << shift;
+      shift += 7n;
+      bytesRead++;
+
+      if ((byte & 0x80) === 0) {
+        if (bytesRead < 10 && (byte & 0x40)) {
+          result |= (~0n << shift);
+        }
+        return result;
+      }
+
+      if (bytesRead >= 10) return null;
     }
   }
 
