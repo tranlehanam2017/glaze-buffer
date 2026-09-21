@@ -444,6 +444,12 @@ function testRingBuffer() {
   assert(rb.writeAll([9, 10, 11]) === false, "writeAll should fail when insufficient space");
   assert(rb.availableRead === 8, "writeAll should not have written any bytes on failure");
 
+  // Explicit test for clear
+  rb.clear();
+  assert(rb.isEmpty(), "Buffer should be empty after clear");
+  assert(rb.availableRead === 0, "availableRead should be 0 after clear");
+  assert(rb.availableWrite === rb.capacity, "availableWrite should be capacity after clear");
+
   console.log("All tests passed!");
 }
 
