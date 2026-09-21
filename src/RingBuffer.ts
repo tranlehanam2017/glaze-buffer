@@ -367,6 +367,25 @@ export class RingBuffer {
     return this.readString(length);
   }
 
+  /**
+   * Reads a string until a null terminator (0x00) is encountered.
+   * The null terminator is consumed from the buffer.
+   * @returns The decoded string, or null if the buffer is exhausted before finding a terminator.
+   */
+  public readNullTerminatedString(): string | null {
+    let length = 0;
+    while (length < this.count) {
+      if (this.peekUint8(length) === 0) break;
+      length++;
+    }
+
+    if (length === this.count) return null;
+
+    const bytes = this.read(length);
+    this.readByte(); // Consume the null terminator
+    return this.decoder.decode(bytes);
+  }
+
   public readExactly(length: number): Uint8Array | null {
     if (this.count < length) return null;
     return this.read(length);
@@ -385,10 +404,6 @@ export class RingBuffer {
       const byte = this.readUint8();
       if (byte === null) return null;
 
-      // If we've read 4 bytes and are now on the 5th, the 5th byte must not exceed 0x0F
-      // to prevent overflowing a 32-bit unsigned integer (4*7 + 3 = 31 bits used by first 4, 
-      // leaving 3 bits for the 5th byte: 2^3 - 1 = 7. Actually, 32 bits / 7 bits = 4.57).
-      // LEB128 for 32-bit: 1st-4th bytes (7 bits each) = 28 bits. 5th byte can have max 4 bits (28+4=32).
       if (bytesRead === 4 && (byte & 0xF0) !== 0) return null;
 
       result |= (byte & 0x7f) << shift;
@@ -396,10 +411,10 @@ export class RingBuffer {
 
       shift += 7;
       bytesRead++;
-      if (bytesRead >= 5) return null; // Prevent overflow/malformed data
+      if (bytesRead >= 5) return null;
     }
 
-    return result >>> 0; // Ensure unsigned 32-bit
+    return result >>> 0;
   }
 
   /**
@@ -420,11 +435,6 @@ export class RingBuffer {
       bytesRead++;
 
       if ((byte & 0x80) === 0) {
-        // Sign extend if we have a 32-bit signed int and the last byte's sign bit is set
-        if (shift === 35 && (byte & 0x40)) {
-          // This case is for values that actually use the full range
-        }
-        // General sign extension for JS numbers (which are doubles)
         if (shift - 7 < 31 && (byte & 0x40)) {
           result |= (~0 << shift);
         }
