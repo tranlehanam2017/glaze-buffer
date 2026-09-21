@@ -597,22 +597,24 @@ export class RingBuffer {
     return (val << 16) >> 16;
   }
 
+  private peekBytes(offset: number, length: number): Uint8Array | null {
+    if (offset < 0 || offset + length > this.count) return null;
+    const temp = new Uint8Array(length);
+    this.peekIntoAt(temp, 0, length);
+    // Note: peekIntoAt reads from readOffset, but we need it from readOffset + offset
+    // So we use slice instead for simplicity and correctness
+    return this.slice(offset, offset + length);
+  }
+
   /**
    * Peeks at an unsigned 32-bit integer at the specified offset without consuming data.
    * @param offset Offset relative to the current read head.
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekUint32(offset: number = 0): number | null {
-    if (offset < 0 || offset + 4 > this.count) return null;
-    
-    const temp = new Uint8Array(4);
-    const internalReadOffset = this.readOffset;
-    
-    this.readOffset = (this.readOffset + offset) % this.size;
-    this.peekInto(temp, 4);
-    this.readOffset = internalReadOffset;
-
-    return new DataView(temp.buffer).getUint32(0, false);
+    const bytes = this.peekBytes(offset, 4);
+    if (!bytes) return null;
+    return new DataView(bytes.buffer).getUint32(0, false);
   }
 
   /**
@@ -621,16 +623,9 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekInt32(offset: number = 0): number | null {
-    if (offset < 0 || offset + 4 > this.count) return null;
-    
-    const temp = new Uint8Array(4);
-    const internalReadOffset = this.readOffset;
-    
-    this.readOffset = (this.readOffset + offset) % this.size;
-    this.peekInto(temp, 4);
-    this.readOffset = internalReadOffset;
-
-    return new DataView(temp.buffer).getInt32(0, false);
+    const bytes = this.peekBytes(offset, 4);
+    if (!bytes) return null;
+    return new DataView(bytes.buffer).getInt32(0, false);
   }
 
   /**
@@ -639,16 +634,9 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekFloat32(offset: number = 0): number | null {
-    if (offset < 0 || offset + 4 > this.count) return null;
-    
-    const temp = new Uint8Array(4);
-    const internalReadOffset = this.readOffset;
-    
-    this.readOffset = (this.readOffset + offset) % this.size;
-    this.peekInto(temp, 4);
-    this.readOffset = internalReadOffset;
-
-    return new DataView(temp.buffer).getFloat32(0, false);
+    const bytes = this.peekBytes(offset, 4);
+    if (!bytes) return null;
+    return new DataView(bytes.buffer).getFloat32(0, false);
   }
 
   /**
@@ -657,16 +645,9 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekFloat64(offset: number = 0): number | null {
-    if (offset < 0 || offset + 8 > this.count) return null;
-    
-    const temp = new Uint8Array(8);
-    const internalReadOffset = this.readOffset;
-    
-    this.readOffset = (this.readOffset + offset) % this.size;
-    this.peekInto(temp, 8);
-    this.readOffset = internalReadOffset;
-
-    return new DataView(temp.buffer).getFloat64(0, false);
+    const bytes = this.peekBytes(offset, 8);
+    if (!bytes) return null;
+    return new DataView(bytes.buffer).getFloat64(0, false);
   }
 
   public resize(newCapacity: number): void {
