@@ -793,6 +793,14 @@ export class RingBuffer {
     return this.count >= length;
   }
 
+  /**
+   * Returns the current read and write offsets.
+   * Useful for debugging and internal state tracking.
+   */
+  public getOffsets(): { readOffset: number, writeOffset: number } {
+    return { readOffset: this.readOffset, writeOffset: this.writeOffset };
+  }
+
   *[Symbol.iterator](): Iterator<number> {
     let current = 0;
     while (current < this.count) {
