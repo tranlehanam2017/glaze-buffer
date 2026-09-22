@@ -740,6 +740,64 @@ export class RingBuffer {
     return new DataView(bytes.buffer).getFloat64(0, false);
   }
 
+  /**
+   * Peeks at an unsigned 64-bit integer using LEB128 variable-length encoding.
+   * @param offset Offset relative to the current read head.
+   * @returns The decoded BigInt value, or null if insufficient data is available.
+   */
+  public peekVarUint64(offset: number = 0): bigint | null {
+    let result = 0n;
+    let shift = 0n;
+    let bytesRead = 0;
+    let currentOffset = offset;
+
+    while (true) {
+      const byte = this.peekUint8(currentOffset);
+      if (byte === null) return null;
+
+      result |= BigInt(byte & 0x7f) << shift;
+      if ((byte & 0x80) === 0) break;
+
+      shift += 7n;
+      bytesRead++;
+      currentOffset++;
+      if (bytesRead >= 10) return null;
+    }
+
+    return result;
+  }
+
+  /**
+   * Peeks at a signed 64-bit integer using LEB128 variable-length encoding.
+   * @param offset Offset relative to the current read head.
+   * @returns The decoded BigInt value, or null if insufficient data is available.
+   */
+  public peekVarInt64(offset: number = 0): bigint | null {
+    let result = 0n;
+    let shift = 0n;
+    let bytesRead = 0;
+    let currentOffset = offset;
+
+    while (true) {
+      const byte = this.peekUint8(currentOffset);
+      if (byte === null) return null;
+
+      result |= BigInt(byte & 0x7f) << shift;
+      shift += 7n;
+      bytesRead++;
+      currentOffset++;
+
+      if ((byte & 0x80) === 0) {
+        if (bytesRead < 10 && (byte & 0x40)) {
+          result |= (~0n << shift);
+        }
+        return result;
+      }
+
+      if (bytesRead >= 10) return null;
+    }
+  }
+
   public resize(newCapacity: number): void {
     if (newCapacity === this.size) return;
 
