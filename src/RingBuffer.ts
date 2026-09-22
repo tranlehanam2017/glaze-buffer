@@ -689,10 +689,6 @@ export class RingBuffer {
 
   private peekBytes(offset: number, length: number): Uint8Array | null {
     if (offset < 0 || offset + length > this.count) return null;
-    const temp = new Uint8Array(length);
-    this.peekIntoAt(temp, 0, length);
-    // Note: peekIntoAt reads from readOffset, but we need it from readOffset + offset
-    // So we use slice instead for simplicity and correctness
     return this.slice(offset, offset + length);
   }
 
@@ -738,6 +734,35 @@ export class RingBuffer {
     const bytes = this.peekBytes(offset, 8);
     if (!bytes) return null;
     return new DataView(bytes.buffer).getFloat64(0, false);
+  }
+
+  /**
+   * Peeks at an unsigned integer using LEB128 variable-length encoding.
+   * @param offset Offset relative to the current read head.
+   * @returns The decoded value, or null if insufficient data is available.
+   */
+  public peekVarUint(offset: number = 0): number | null {
+    let result = 0;
+    let shift = 0;
+    let bytesRead = 0;
+    let currentOffset = offset;
+
+    while (true) {
+      const byte = this.peekUint8(currentOffset);
+      if (byte === null) return null;
+
+      if (bytesRead === 4 && (byte & 0xF0) !== 0) return null;
+
+      result |= (byte & 0x7f) << shift;
+      if ((byte & 0x80) === 0) break;
+
+      shift += 7;
+      bytesRead++;
+      currentOffset++;
+      if (bytesRead >= 5) return null;
+    }
+
+    return result >>> 0;
   }
 
   /**
