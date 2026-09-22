@@ -196,6 +196,24 @@ export class RingBuffer {
   }
 
   /**
+   * Writes an unsigned 64-bit integer using LEB128 variable-length encoding.
+   * @param value The BigInt value to write.
+   * @returns True if successfully written, false if buffer space is insufficient.
+   */
+  public writeVarUint64(value: bigint): boolean {
+    if (value < 0n) return false;
+    if (this.availableWrite < 10) return false;
+
+    let v = value;
+    while (v >= 0x80n) {
+      this.writeUint8(Number((v & 0x7fn) | 0x80n));
+      v >>= 7n;
+    }
+    this.writeUint8(Number(v & 0x7fn));
+    return true;
+  }
+
+  /**
    * Writes a signed 32-bit integer using LEB128 variable-length encoding.
    * @param value The value to write.
    * @returns True if successfully written, false if buffer space is insufficient.
@@ -435,6 +453,30 @@ export class RingBuffer {
     }
 
     return result >>> 0;
+  }
+
+  /**
+   * Reads an unsigned 64-bit integer using LEB128 variable-length encoding.
+   * @returns The decoded BigInt value, or null if the buffer is empty or the varint is malformed (exceeds 10 bytes).
+   */
+  public readVarUint64(): bigint | null {
+    let result = 0n;
+    let shift = 0n;
+    let bytesRead = 0;
+
+    while (true) {
+      const byte = this.readUint8();
+      if (byte === null) return null;
+
+      result |= BigInt(byte & 0x7f) << shift;
+      if ((byte & 0x80) === 0) break;
+
+      shift += 7n;
+      bytesRead++;
+      if (bytesRead >= 10) return null;
+    }
+
+    return result;
   }
 
   /**
