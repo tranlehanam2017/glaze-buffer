@@ -21,15 +21,19 @@ export class RingBuffer {
 
     if (bytesToWrite === 0) return 0;
 
-    const firstChunkSize = Math.min(bytesToWrite, this.size - this.writeOffset);
-    this.buffer.set(input.subarray(0, firstChunkSize), this.writeOffset);
+    const buf = this.buffer;
+    const size = this.size;
+    const writeOffset = this.writeOffset;
+
+    const firstChunkSize = Math.min(bytesToWrite, size - writeOffset);
+    buf.set(input.subarray(0, firstChunkSize), writeOffset);
 
     if (bytesToWrite > firstChunkSize) {
       const secondChunkSize = bytesToWrite - firstChunkSize;
-      this.buffer.set(input.subarray(firstChunkSize, bytesToWrite), 0);
+      buf.set(input.subarray(firstChunkSize, bytesToWrite), 0);
     }
 
-    this.writeOffset = (this.writeOffset + bytesToWrite) % this.size;
+    this.writeOffset = (writeOffset + bytesToWrite) % size;
     this.count += bytesToWrite;
 
     return bytesToWrite;
