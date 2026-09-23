@@ -452,7 +452,7 @@ function testRingBuffer() {
 
   // Test 64-bit varints
   rb.clear();
-  rb.resize(30);
+  rb.resize(100);
   const vUint64 = 0x123456789ABCDEF0n;
   const vInt64 = -0x123456789ABCDEF0n;
   assert(rb.writeVarUint64(vUint64) === true, "writeVarUint64 failed");
@@ -461,14 +461,39 @@ function testRingBuffer() {
   assert(rb.readVarInt64() === vInt64, "readVarInt64 mismatch");
   assert(rb.isEmpty(), "Buffer should be empty after reading 64-bit varints");
 
+  // Test 64-bit varint edge cases
+  rb.clear();
+  assert(rb.writeVarUint64(0n) === true, "writeVarUint64(0) failed");
+  assert(rb.writeVarUint64(1n) === true, "writeVarUint64(1) failed
+  assert(rb.writeVarUint64(0xFFFFFFFFFFFFFFFFn) === true, "writeVarUint64(max) failed");
+  assert(rb.writeVarInt64(0n) === true, "writeVarInt64(0) failed");
+  assert(rb.writeVarInt64(-1n) === true, "writeVarInt64(-1) failed");
+  assert(rb.writeVarInt64(0x7FFFFFFFFFFFFFFFn) === true, "writeVarInt64(max) failed");
+  assert(rb.writeVarInt64(-0x8000000000000000n) === true, "writeVarInt64(min) failed");
+
+  assert(rb.readVarUint64() === 0n, "readVarUint64(0) mismatch");
+  assert(rb.readVarUint64() === 1n, "readVarUint64(1) mismatch");
+  assert(rb.readVarUint64() === 0xFFFFFFFFFFFFFFFFn, "readVarUint64(max) mismatch");
+  assert(rb.readVarInt64() === 0n, "readVarInt64(0) mismatch");
+  assert(rb.readVarInt64() === -1n, "readVarInt64(-1) mismatch");
+  assert(rb.readVarInt64() === 0x7FFFFFFFFFFFFFFFn, "readVarInt64(max) mismatch");
+  assert(rb.readVarInt64() === -0x8000000000000000n, "readVarInt64(min) mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading 64-bit varint edge cases");
+
   // Test 64-bit varint peeks
   rb.clear();
   rb.writeVarUint64(vUint64);
   rb.writeVarInt64(vInt64);
   assert(rb.peekVarUint64(0) === vUint64, "peekVarUint64(0) mismatch");
-  // Offset for vUint64 is roughly 9-10 bytes
-  const vUint64Len = rb.slice(0, rb.count).length; // This is not quite right, but we can just check the end
-  assert(rb.peekVarInt64(rb.count - 10) !== null, "peekVarInt64 should find something");
+  
+  // Calculate offset for the second varint
+  let offset = 0;
+  let temp = vUint64;
+  while (temp >= 0x80n) { temp >>= 7n; offset++; }
+  offset++;
+  
+  assert(rb.peekVarInt64(offset) === vInt64, "peekVarInt64 at offset mismatch");
+  assert(rb.availableRead === (offset + 10), "Peek should not consume data");
 
   console.log("All tests passed!");
 }
