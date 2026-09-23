@@ -464,7 +464,7 @@ function testRingBuffer() {
   // Test 64-bit varint edge cases
   rb.clear();
   assert(rb.writeVarUint64(0n) === true, "writeVarUint64(0) failed");
-  assert(rb.writeVarUint64(1n) === true, "writeVarUint64(1) failed
+  assert(rb.writeVarUint64(1n) === true, "writeVarUint64(1) failed");
   assert(rb.writeVarUint64(0xFFFFFFFFFFFFFFFFn) === true, "writeVarUint64(max) failed");
   assert(rb.writeVarInt64(0n) === true, "writeVarInt64(0) failed");
   assert(rb.writeVarInt64(-1n) === true, "writeVarInt64(-1) failed");
