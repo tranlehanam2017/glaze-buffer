@@ -793,6 +793,37 @@ export class RingBuffer {
   }
 
   /**
+   * Peeks at a signed 32-bit integer using LEB128 variable-length encoding.
+   * @param offset Offset relative to the current read head.
+   * @returns The decoded value, or null if insufficient data is available.
+   */
+  public peekVarInt(offset: number = 0): number | null {
+    let result = 0;
+    let shift = 0;
+    let bytesRead = 0;
+    let currentOffset = offset;
+
+    while (true) {
+      const byte = this.peekUint8(currentOffset);
+      if (byte === null) return null;
+
+      result |= (byte & 0x7f) << shift;
+      shift += 7;
+      bytesRead++;
+      currentOffset++;
+
+      if ((byte & 0x80) === 0) {
+        if (shift - 7 < 31 && (byte & 0x40)) {
+          result |= (~0 << shift);
+        }
+        return result >> 0;
+      }
+
+      if (bytesRead >= 5) return null;
+    }
+  }
+
+  /**
    * Peeks at a signed 64-bit integer using LEB128 variable-length encoding.
    * @param offset Offset relative to the current read head.
    * @returns The decoded BigInt value, or null if insufficient data is available.
