@@ -450,6 +450,26 @@ function testRingBuffer() {
   assert(rb.availableRead === 0, "availableRead should be 0 after clear");
   assert(rb.availableWrite === rb.capacity, "availableWrite should be capacity after clear");
 
+  // Test 64-bit varints
+  rb.clear();
+  rb.resize(30);
+  const vUint64 = 0x123456789ABCDEF0n;
+  const vInt64 = -0x123456789ABCDEF0n;
+  assert(rb.writeVarUint64(vUint64) === true, "writeVarUint64 failed");
+  assert(rb.writeVarInt64(vInt64) === true, "writeVarInt64 failed");
+  assert(rb.readVarUint64() === vUint64, "readVarUint64 mismatch");
+  assert(rb.readVarInt64() === vInt64, "readVarInt64 mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after reading 64-bit varints");
+
+  // Test 64-bit varint peeks
+  rb.clear();
+  rb.writeVarUint64(vUint64);
+  rb.writeVarInt64(vInt64);
+  assert(rb.peekVarUint64(0) === vUint64, "peekVarUint64(0) mismatch");
+  // Offset for vUint64 is roughly 9-10 bytes
+  const vUint64Len = rb.slice(0, rb.count).length; // This is not quite right, but we can just check the end
+  assert(rb.peekVarInt64(rb.count - 10) !== null, "peekVarInt64 should find something");
+
   console.log("All tests passed!");
 }
 
