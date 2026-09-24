@@ -719,6 +719,28 @@ export class RingBuffer {
   }
 
   /**
+   * Peeks at an unsigned 64-bit integer at the specified offset without consuming data.
+   * @param offset Offset relative to the current read head.
+   * @returns The value, or null if insufficient data is available at the offset.
+   */
+  public peekUint64(offset: number = 0): bigint | null {
+    const bytes = this.peekBytes(offset, 8);
+    if (!bytes) return null;
+    return new DataView(bytes.buffer).getBigUint64(0, false);
+  }
+
+  /**
+   * Peeks at a signed 64-bit integer at the specified offset without consuming data.
+   * @param offset Offset relative to the current read head.
+   * @returns The value, or null if insufficient data is available at the offset.
+   */
+  public peekInt64(offset: number = 0): bigint | null {
+    const bytes = this.peekBytes(offset, 8);
+    if (!bytes) return null;
+    return new DataView(bytes.buffer).getBigInt64(0, false);
+  }
+
+  /**
    * Peeks at a 32-bit float at the specified offset without consuming data.
    * @param offset Offset relative to the current read head.
    * @returns The value, or null if insufficient data is available at the offset.
