@@ -544,7 +544,7 @@ export class RingBuffer {
   }
 
   public readAvailable(): Uint8Array {
-    return this.read(this.count);
+    return this.slice(0, this.count);
   }
 
   public peek(length: number): Uint8Array {
