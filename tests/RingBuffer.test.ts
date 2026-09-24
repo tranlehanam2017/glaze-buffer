@@ -495,6 +495,27 @@ function testRingBuffer() {
   assert(rb.peekVarInt64(offset) === vInt64, "peekVarInt64 at offset mismatch");
   assert(rb.availableRead === (offset + 10), "Peek should not consume data");
 
+  // Test readNullTerminatedString
+  rb.clear();
+  rb.resize(20);
+  const nullStr = "NullTerm";
+  const nullStrBytes = new TextEncoder().encode(nullStr);
+  rb.write(nullStrBytes);
+  rb.writeUint8(0);
+  assert(rb.readNullTerminatedString() === nullStr, "readNullTerminatedString mismatch");
+  assert(rb.isEmpty(), "Buffer should be empty after readNullTerminatedString");
+
+  rb.clear();
+  rb.write([1, 2, 3]); // No null terminator
+  assert(rb.readNullTerminatedString() === null, "readNullTerminatedString should return null if terminator missing");
+
+  rb.clear();
+  assert(rb.readNullTerminatedString() === null, "readNullTerminatedString should return null when empty");
+
+  rb.clear();
+  rb.write([0]); // Only null terminator
+  assert(rb.readNullTerminatedString() === "", "readNullTerminatedString should return empty string for only null terminator");
+
   console.log("All tests passed!");
 }
 
