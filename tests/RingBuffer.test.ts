@@ -516,6 +516,22 @@ function testRingBuffer() {
   rb.write([0]); // Only null terminator
   assert(rb.readNullTerminatedString() === "", "readNullTerminatedString should return empty string for only null terminator");
 
+  // Test varint peeks
+  rb.clear();
+  rb.resize(20);
+  rb.writeVarUint(127);
+  rb.writeVarUint(128);
+  assert(rb.peekVarUint(0) === 127, "peekVarUint(0) mismatch");
+  assert(rb.peekVarUint(1) === 128, "peekVarUint(1) mismatch");
+  assert(rb.availableRead === 3, "peekVarUint should not consume data");
+
+  rb.clear();
+  rb.writeVarInt(-1);
+  rb.writeVarInt(127);
+  assert(rb.peekVarInt(0) === -1, "peekVarInt(0) mismatch");
+  assert(rb.peekVarInt(1) === 127, "peekVarInt(1) mismatch");
+  assert(rb.availableRead === 2, "peekVarInt should not consume data");
+
   console.log("All tests passed!");
 }
 
