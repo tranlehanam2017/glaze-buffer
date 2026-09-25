@@ -691,9 +691,20 @@ export class RingBuffer {
     return (val << 16) >> 16;
   }
 
-  private peekBytes(offset: number, length: number): Uint8Array | null {
-    if (offset < 0 || offset + length > this.count) return null;
-    return this.slice(offset, offset + length);
+  private peekBytesToScratch(offset: number, length: number): boolean {
+    if (offset < 0 || offset + length > this.count) return false;
+    
+    const internalStart = (this.readOffset + offset) % this.size;
+    const firstChunkSize = Math.min(length, this.size - internalStart);
+    
+    this.scratch.set(this.buffer.subarray(internalStart, internalStart + firstChunkSize), 0);
+
+    if (length > firstChunkSize) {
+      const secondChunkSize = length - firstChunkSize;
+      this.scratch.set(this.buffer.subarray(0, secondChunkSize), firstChunkSize);
+    }
+    
+    return true;
   }
 
   /**
@@ -702,9 +713,8 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekUint32(offset: number = 0): number | null {
-    const bytes = this.peekBytes(offset, 4);
-    if (!bytes) return null;
-    return new DataView(bytes.buffer).getUint32(0, false);
+    if (!this.peekBytesToScratch(offset, 4)) return null;
+    return this.scratchView.getUint32(0, false);
   }
 
   /**
@@ -713,9 +723,8 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekInt32(offset: number = 0): number | null {
-    const bytes = this.peekBytes(offset, 4);
-    if (!bytes) return null;
-    return new DataView(bytes.buffer).getInt32(0, false);
+    if (!this.peekBytesToScratch(offset, 4)) return null;
+    return this.scratchView.getInt32(0, false);
   }
 
   /**
@@ -724,9 +733,8 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekUint64(offset: number = 0): bigint | null {
-    const bytes = this.peekBytes(offset, 8);
-    if (!bytes) return null;
-    return new DataView(bytes.buffer).getBigUint64(0, false);
+    if (!this.peekBytesToScratch(offset, 8)) return null;
+    return this.scratchView.getBigUint64(0, false);
   }
 
   /**
@@ -735,9 +743,8 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekInt64(offset: number = 0): bigint | null {
-    const bytes = this.peekBytes(offset, 8);
-    if (!bytes) return null;
-    return new DataView(bytes.buffer).getBigInt64(0, false);
+    if (!this.peekBytesToScratch(offset, 8)) return null;
+    return this.scratchView.getBigInt64(0, false);
   }
 
   /**
@@ -746,9 +753,8 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekFloat32(offset: number = 0): number | null {
-    const bytes = this.peekBytes(offset, 4);
-    if (!bytes) return null;
-    return new DataView(bytes.buffer).getFloat32(0, false);
+    if (!this.peekBytesToScratch(offset, 4)) return null;
+    return this.scratchView.getFloat32(0, false);
   }
 
   /**
@@ -757,9 +763,8 @@ export class RingBuffer {
    * @returns The value, or null if insufficient data is available at the offset.
    */
   public peekFloat64(offset: number = 0): number | null {
-    const bytes = this.peekBytes(offset, 8);
-    if (!bytes) return null;
-    return new DataView(bytes.buffer).getFloat64(0, false);
+    if (!this.peekBytesToScratch(offset, 8)) return null;
+    return this.scratchView.getFloat64(0, false);
   }
 
   /**
