@@ -361,40 +361,47 @@ export class RingBuffer {
     return (val << 16) >> 16; // Efficient sign extension for 16-bit
   }
 
+  private readPrimitive(length: number, readFn: (view: DataView, offset: number) => any): any {
+    if (this.count < length) return null;
+
+    let result: any;
+    const contiguousLength = this.size - this.readOffset;
+    
+    if (length <= contiguousLength) {
+      const view = new DataView(this.buffer.buffer, this.buffer.byteOffset + this.readOffset, length);
+      result = readFn(view, 0);
+    } else {
+      this.readInto(this.scratch, length);
+      result = readFn(this.scratchView, 0);
+    }
+
+    this.readOffset = (this.readOffset + length) % this.size;
+    this.count -= length;
+    return result;
+  }
+
   public readUint32(): number | null {
-    if (this.count < 4) return null;
-    this.readInto(this.scratch, 4);
-    return this.scratchView.getUint32(0, false);
+    return this.readPrimitive(4, (v, o) => v.getUint32(o, false));
   }
 
   public readInt32(): number | null {
-    if (this.count < 4) return null;
-    this.readInto(this.scratch, 4);
-    return this.scratchView.getInt32(0, false);
+    return this.readPrimitive(4, (v, o) => v.getInt32(o, false));
   }
 
   public readUint64(): bigint | null {
-    if (this.count < 8) return null;
-    this.readInto(this.scratch, 8);
-    return this.scratchView.getBigUint64(0, false);
+    return this.readPrimitive(8, (v, o) => v.getBigUint64(o, false));
   }
 
   public readInt64(): bigint | null {
-    if (this.count < 8) return null;
-    this.readInto(this.scratch, 8);
-    return this.scratchView.getBigInt64(0, false);
+    return this.readPrimitive(8, (v, o) => v.getBigInt64(o, false));
   }
 
   public readFloat32(): number | null {
-    if (this.count < 4) return null;
-    this.readInto(this.scratch, 4);
-    return this.scratchView.getFloat32(0, false);
+    return this.readPrimitive(4, (v, o) => v.getFloat32(o, false));
   }
 
   public readFloat64(): number | null {
-    if (this.count < 8) return null;
-    this.readInto(this.scratch, 8);
-    return this.scratchView.getFloat64(0, false);
+    return this.readPrimitive(8, (v, o) => v.getFloat64(o, false));
   }
 
   public readString(length: number): string | null {
