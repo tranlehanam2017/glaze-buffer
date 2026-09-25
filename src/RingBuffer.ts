@@ -983,6 +983,18 @@ export class RingBuffer {
     return { readOffset: this.readOffset, writeOffset: this.writeOffset };
   }
 
+  /**
+   * Returns the current state of the buffer.
+   */
+  public getState(): { readOffset: number, writeOffset: number, count: number, capacity: number } {
+    return {
+      readOffset: this.readOffset,
+      writeOffset: this.writeOffset,
+      count: this.count,
+      capacity: this.size
+    };
+  }
+
   *[Symbol.iterator](): Iterator<number> {
     let current = 0;
     while (current < this.count) {
