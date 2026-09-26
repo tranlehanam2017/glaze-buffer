@@ -532,6 +532,23 @@ function testRingBuffer() {
   assert(rb.peekVarInt(1) === 127, "peekVarInt(1) mismatch");
   assert(rb.availableRead === 2, "peekVarInt should not consume data");
 
+  // Additional 64-bit varint peek edge cases
+  rb.clear();
+  rb.resize(100);
+  const edgeVUint64 = 0x7FFFFFFFFFFFFFFFn;
+  const edgeVInt64 = -0x8000000000000000n;
+  rb.writeVarUint64(edgeVUint64);
+  rb.writeVarInt64(edgeVInt64);
+  assert(rb.peekVarUint64(0) === edgeVUint64, "peekVarUint64 edge max mismatch");
+  
+  let edgeOffset = 0;
+  let edgeTemp = edgeVUint64;
+  while (edgeTemp >= 0x80n) { edgeTemp >>= 7n; edgeOffset++; }
+  edgeOffset++;
+  
+  assert(rb.peekVarInt64(edgeOffset) === edgeVInt64, "peekVarInt64 edge min mismatch");
+  assert(rb.availableRead === (edgeOffset + 10), "Peek should not consume data");
+
   console.log("All tests passed!");
 }
 
