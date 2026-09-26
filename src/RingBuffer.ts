@@ -476,7 +476,7 @@ export class RingBuffer {
     let bytesRead = 0;
 
     while (true) {
-      const byte = this.peekUint8(bytesRead);
+      const byte = this.readUint8();
       if (byte === null) return null;
 
       result |= BigInt(byte & 0x7f) << shift;
@@ -487,8 +487,6 @@ export class RingBuffer {
       if (bytesRead >= 10) return null;
     }
 
-    this.readOffset = (this.readOffset + bytesRead + 1) % this.size;
-    this.count -= (bytesRead + 1);
     return result;
   }
 
@@ -530,7 +528,7 @@ export class RingBuffer {
     let bytesRead = 0;
 
     while (true) {
-      const byte = this.peekUint8(bytesRead);
+      const byte = this.readUint8();
       if (byte === null) return null;
 
       result |= BigInt(byte & 0x7f) << shift;
@@ -541,8 +539,6 @@ export class RingBuffer {
         if (bytesRead < 10 && (byte & 0x40)) {
           result |= (~0n << shift);
         }
-        this.readOffset = (this.readOffset + bytesRead) % this.size;
-        this.count -= bytesRead;
         return result;
       }
 
