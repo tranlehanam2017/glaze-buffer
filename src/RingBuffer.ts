@@ -951,6 +951,10 @@ export class RingBuffer {
     return this.count === this.size;
   }
 
+  public isNotFull(): boolean {
+    return this.count !== this.size;
+  }
+
   public clear(): void {
     this.readOffset = 0;
     this.writeOffset = 0;
