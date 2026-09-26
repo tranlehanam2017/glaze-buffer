@@ -287,7 +287,7 @@ function testRingBuffer() {
 
   const targetSmall = new Uint8Array(2);
   const readCountSmall = rb.readInto(targetSmall, 5);
-  assert(readCountSmall === 2, "readInto should be limited by target size");
+  assert(readCountSmall === 2, "readInto small target mismatch");
   assert(targetSmall[0] === 40 && targetSmall[1] === 50, "readInto small target mismatch");
   assert(rb.isEmpty(), "readInto should have consumed remaining data");
 
