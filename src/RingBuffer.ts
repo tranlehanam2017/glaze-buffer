@@ -943,6 +943,10 @@ export class RingBuffer {
     return this.count === 0;
   }
 
+  public isNotEmpty(): boolean {
+    return this.count !== 0;
+  }
+
   public isFull(): boolean {
     return this.count === this.size;
   }
