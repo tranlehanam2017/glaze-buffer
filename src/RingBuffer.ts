@@ -780,6 +780,15 @@ export class RingBuffer {
    * @returns The decoded value, or null if insufficient data is available.
    */
   public peekVarUint(offset: number = 0): number | null {
+    return this.peekVarUint32(offset);
+  }
+
+  /**
+   * Peeks at an unsigned 32-bit integer using LEB128 variable-length encoding.
+   * @param offset Offset relative to the current read head.
+   * @returns The decoded value, or null if insufficient data is available or overflows 32 bits.
+   */
+  public peekVarUint32(offset: number = 0): number | null {
     let result = 0;
     let shift = 0;
     let bytesRead = 0;
