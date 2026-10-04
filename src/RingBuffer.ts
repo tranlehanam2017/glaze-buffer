@@ -1024,6 +1024,13 @@ export class RingBuffer {
     };
   }
 
+  /**
+   * Returns true if the buffer contains any data.
+   */
+  public hasData(): boolean {
+    return this.count > 0;
+  }
+
   *[Symbol.iterator](): Iterator<number> {
     let current = 0;
     while (current < this.count) {
