@@ -1005,6 +1005,15 @@ export class RingBuffer {
   }
 
   /**
+   * Checks if the buffer has enough space to write the specified number of bytes.
+   * @param length The number of bytes to write.
+   * @returns True if enough space is available, false otherwise.
+   */
+  public canWrite(length: number): boolean {
+    return this.availableWrite >= length;
+  }
+
+  /**
    * Returns the current read and write offsets.
    * Useful for debugging and internal state tracking.
    */
