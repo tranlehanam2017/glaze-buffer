@@ -549,6 +549,15 @@ function testRingBuffer() {
   assert(rb.peekVarInt64(edgeOffset) === edgeVInt64, "peekVarInt64 edge min mismatch");
   assert(rb.availableRead === (edgeOffset + 10), "Peek should not consume data");
 
+  // Test peekVarUint32
+  rb.clear();
+  rb.resize(20);
+  rb.writeVarUint(127);
+  rb.writeVarUint(16384);
+  assert(rb.peekVarUint32(0) === 127, "peekVarUint32(0) mismatch");
+  assert(rb.peekVarUint32(1) === 16384, "peekVarUint32(1) mismatch");
+  assert(rb.availableRead === 4, "peekVarUint32 should not consume data");
+
   console.log("All tests passed!");
 }
 
