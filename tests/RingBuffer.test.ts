@@ -558,6 +558,23 @@ function testRingBuffer() {
   assert(rb.peekVarUint32(1) === 16384, "peekVarUint32(1) mismatch");
   assert(rb.availableRead === 4, "peekVarUint32 should not consume data");
 
+  // Test hasData
+  rb.clear();
+  assert(rb.hasData() === false, "hasData should be false when empty");
+  rb.write([1]);
+  assert(rb.hasData() === true, "hasData should be true when data present");
+  rb.read(1);
+  assert(rb.hasData() === false, "hasData should be false after draining");
+
+  // Test canWrite
+  rb.clear();
+  rb.resize(5);
+  assert(rb.canWrite(0) === true, "canWrite(0) should be true");
+  assert(rb.canWrite(5) === true, "canWrite(5) should be true for empty 5-cap");
+  rb.write([1, 2, 3]);
+  assert(rb.canWrite(2) === true, "canWrite(2) should be true");
+  assert(rb.canWrite(3) === false, "canWrite(3) should be false");
+
   console.log("All tests passed!");
 }
 
