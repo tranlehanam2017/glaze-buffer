@@ -1,4 +1,5 @@
 import { RingBuffer } from '../src/RingBuffer';
+import { writeFrame, readFrame, peekFrame, hasCompleteFrame, discardFrame, readAllFrames, varUintSize } from '../src/framing';
 
 function assert(condition: boolean, message: string) {
   if (!condition) throw new Error(message);
@@ -574,6 +575,59 @@ function testRingBuffer() {
   rb.write([1, 2, 3]);
   assert(rb.canWrite(2) === true, "canWrite(2) should be true");
   assert(rb.canWrite(3) === false, "canWrite(3) should be false");
+
+  // Test framing codec
+  rb.clear();
+  rb.resize(64);
+  assert(writeFrame(rb, [1, 2, 3]) === true, "writeFrame small failed");
+  const framedPeek = peekFrame(rb);
+  assert(framedPeek !== null && framedPeek.length === 3 && framedPeek[0] === 1 && framedPeek[2] === 3, "peekFrame failed");
+  assert(rb.availableRead === 4, "peekFrame should not consume data");
+  const framedRead = readFrame(rb);
+  assert(framedRead !== null && framedRead.length === 3 && framedRead[2] === 3, "readFrame failed");
+  assert(rb.isEmpty(), "readFrame should consume data");
+
+  // Empty frame
+  rb.clear();
+  rb.resize(10);
+  assert(writeFrame(rb, []) === true, "empty frame write failed");
+  const emptyFrame = readFrame(rb);
+  assert(emptyFrame !== null && emptyFrame.length === 0, "empty frame read failed");
+
+  // Multiple frames
+  rb.clear();
+  rb.resize(64);
+  writeFrame(rb, [10, 20]);
+  writeFrame(rb, [30]);
+  const allFrames = readAllFrames(rb);
+  assert(allFrames.length === 2 && allFrames[0].length === 2 && allFrames[1][0] === 30, "readAllFrames failed");
+  assert(rb.isEmpty(), "readAllFrames should consume all data");
+
+  // Incomplete frame
+  rb.clear();
+  rb.resize(64);
+  rb.write([5]); // varint 5 with no payload
+  assert(hasCompleteFrame(rb) === false, "incomplete hasCompleteFrame failed");
+  assert(readFrame(rb) === null, "incomplete readFrame should be null");
+  assert(peekFrame(rb) === null, "incomplete peekFrame should be null");
+
+  // Insufficient space
+  rb.clear();
+  rb.resize(4);
+  assert(writeFrame(rb, [1, 2, 3, 4, 5]) === false, "writeFrame should fail when insufficient space");
+  assert(rb.isEmpty(), "failed writeFrame should write nothing");
+
+  // discardFrame
+  rb.clear();
+  rb.resize(64);
+  writeFrame(rb, [7, 8, 9]);
+  assert(discardFrame(rb) === true, "discardFrame failed");
+  assert(rb.isEmpty(), "discardFrame should consume data");
+
+  // varUintSize
+  assert(varUintSize(0) === 1, "varUintSize(0) failed");
+  assert(varUintSize(127) === 1, "varUintSize(127) failed");
+  assert(varUintSize(128) === 2, "varUintSize(128) failed");
 
   console.log("All tests passed!");
 }

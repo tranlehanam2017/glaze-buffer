@@ -8,6 +8,7 @@ A high-performance ring buffer implementation in TypeScript for efficient stream
 - Primitive, varint, string, float, and 64-bit integer helpers
 - Non-destructive peeks and slices
 - Resize, compact, copy, and iterator support
+- Length-prefixed frame codec for streaming framed messages
 
 ## Setup
 
@@ -41,6 +42,16 @@ console.log(rb.readUint32()); // 3737844653
 
 const all = rb.drain();
 console.log(all);
+```
+
+## Framing
+
+```ts
+import { RingBuffer, writeFrame, readFrame } from './src/index';
+
+const rb = new RingBuffer(1024);
+writeFrame(rb, [1, 2, 3]);
+console.log(readFrame(rb)); // Uint8Array [1, 2, 3]
 ```
 
 ## License
