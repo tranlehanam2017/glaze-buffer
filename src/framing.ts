@@ -1,5 +1,17 @@
 import { RingBuffer } from './RingBuffer';
 
+type FrameInput = Uint8Array | number[] | ArrayBuffer | ArrayBufferView;
+
+function toUint8Array(data: FrameInput): Uint8Array {
+  if (data instanceof Uint8Array) return data;
+  if (Array.isArray(data)) return new Uint8Array(data);
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (ArrayBuffer.isView(data)) {
+    return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+  }
+  return new Uint8Array(data as ArrayLike<number>);
+}
+
 /**
  * Returns the number of bytes needed to encode `value` as an unsigned LEB128 varint.
  */
@@ -22,6 +34,7 @@ export function peekVarUintAt(
   buffer: RingBuffer,
   byteOffset: number,
 ): { value: number; size: number } | null {
+  if (byteOffset < 0) return null;
   let result = 0;
   let size = 0;
   for (let i = 0; i < 5; i++) {
@@ -45,9 +58,9 @@ export function peekVarUintAt(
  */
 export function writeFrame(
   buffer: RingBuffer,
-  data: Uint8Array | number[],
+  data: FrameInput,
 ): boolean {
-  const input = data instanceof Uint8Array ? data : new Uint8Array(data);
+  const input = toUint8Array(data);
   const lenSize = varUintSize(input.length);
   if (!buffer.canWrite(lenSize + input.length)) return false;
   if (!buffer.writeVarUint(input.length)) return false;
@@ -121,12 +134,109 @@ export function readAllFrames(buffer: RingBuffer): Uint8Array[] {
 }
 
 /**
+ * Counts complete frames without consuming them.
+ */
+export function countFrames(buffer: RingBuffer): number {
+  let offset = 0;
+  const available = buffer.availableRead;
+  let count = 0;
+  while (offset < available) {
+    const info = peekVarUintAt(buffer, offset);
+    if (!info) break;
+    const frameSize = info.size + info.value;
+    if (offset + frameSize > available) break;
+    count++;
+    offset += frameSize;
+  }
+  return count;
+}
+
+/**
+ * Non-destructively reads all complete frames.
+ */
+export function peekAllFrames(buffer: RingBuffer): Uint8Array[] {
+  const out: Uint8Array[] = [];
+  let offset = 0;
+  const available = buffer.availableRead;
+  while (offset < available) {
+    const info = peekVarUintAt(buffer, offset);
+    if (!info) break;
+    const frameSize = info.size + info.value;
+    if (offset + frameSize > available) break;
+    const payload = new Uint8Array(info.value);
+    if (info.value > 0) {
+      const copied = buffer.peekIntoAt(payload, offset + info.size, info.value);
+      if (copied !== info.value) break;
+    }
+    out.push(payload);
+    offset += frameSize;
+  }
+  return out;
+}
+
+/**
+ * Returns true when data remains after all complete frames.
+ */
+export function hasIncompleteFrame(buffer: RingBuffer): boolean {
+  let offset = 0;
+  const available = buffer.availableRead;
+  while (offset < available) {
+    const info = peekVarUintAt(buffer, offset);
+    if (!info) return true;
+    const frameSize = info.size + info.value;
+    if (offset + frameSize > available) return true;
+    if (offset + frameSize === available) return false;
+    offset += frameSize;
+  }
+  return false;
+}
+
+/**
+ * Reads up to `count` complete frames, consuming them.
+ */
+export function readFrames(buffer: RingBuffer, count: number = Number.MAX_SAFE_INTEGER): Uint8Array[] {
+  const out: Uint8Array[] = [];
+  while (out.length < count && buffer.hasData()) {
+    const frame = readFrame(buffer);
+    if (frame === null) break;
+    out.push(frame);
+  }
+  return out;
+}
+
+/**
+ * Non-destructively reads up to `count` complete frames.
+ */
+export function peekFrames(buffer: RingBuffer, count: number = Number.MAX_SAFE_INTEGER): Uint8Array[] {
+  return peekAllFrames(buffer).slice(0, count);
+}
+
+/**
+ * Consumes and discards up to `count` complete frames.
+ */
+export function discardFrames(buffer: RingBuffer, count: number = Number.MAX_SAFE_INTEGER): number {
+  let discarded = 0;
+  while (discarded < count && buffer.hasData()) {
+    if (!discardFrame(buffer)) break;
+    discarded++;
+  }
+  return discarded;
+}
+
+/**
+ * Consumes and discards all complete frames. Stops at the first incomplete frame.
+ */
+export function discardAllFrames(buffer: RingBuffer): number {
+  return discardFrames(buffer);
+}
+
+/**
  * Ergonomic wrapper around a RingBuffer exposing framed message operations.
  */
 export class FramedRingBuffer {
   constructor(public readonly buffer: RingBuffer) {}
 
-  public writeFrame(data: Uint8Array | number[]): boolean {
+  public writeFrame(data: FrameInput): boolean {
     return writeFrame(this.buffer, data);
   }
 
@@ -142,11 +252,39 @@ export class FramedRingBuffer {
     return hasCompleteFrame(this.buffer);
   }
 
+  public hasIncompleteFrame(): boolean {
+    return hasIncompleteFrame(this.buffer);
+  }
+
   public discardFrame(): boolean {
     return discardFrame(this.buffer);
   }
 
   public readAllFrames(): Uint8Array[] {
     return readAllFrames(this.buffer);
+  }
+
+  public readFrames(count?: number): Uint8Array[] {
+    return readFrames(this.buffer, count);
+  }
+
+  public peekAllFrames(): Uint8Array[] {
+    return peekAllFrames(this.buffer);
+  }
+
+  public peekFrames(count?: number): Uint8Array[] {
+    return peekFrames(this.buffer, count);
+  }
+
+  public countFrames(): number {
+    return countFrames(this.buffer);
+  }
+
+  public discardFrames(count?: number): number {
+    return discardFrames(this.buffer, count);
+  }
+
+  public discardAllFrames(): number {
+    return discardAllFrames(this.buffer);
   }
 }
