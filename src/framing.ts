@@ -163,11 +163,8 @@ export function peekAllFrames(buffer: RingBuffer): Uint8Array[] {
     if (!info) break;
     const frameSize = info.size + info.value;
     if (offset + frameSize > available) break;
-    const payload = new Uint8Array(info.value);
-    if (info.value > 0) {
-      const copied = buffer.peekIntoAt(payload, offset + info.size, info.value);
-      if (copied !== info.value) break;
-    }
+    const payload = buffer.slice(offset + info.size, offset + frameSize);
+    if (payload.length !== info.value) break;
     out.push(payload);
     offset += frameSize;
   }
